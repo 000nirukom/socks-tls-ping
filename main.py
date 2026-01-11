@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+from collections import deque
 import asyncio
 import time
 import sys
 import logging
 import traceback
 from datetime import datetime
-from collections import Counter, deque
+from collections import Counter
 import httpx
 from httpx import AsyncClient, Limits, AsyncHTTPTransport
 import numpy as np
@@ -16,7 +17,7 @@ log_name = sys.argv[2] if len(sys.argv) > 2 else exit(1)
 
 PROXY = "socks5://127.0.0.1:" + port
 TARGET = "https://www.cloudflare.com/cdn-cgi/trace"
-INTERVAL = 1.0  # 请求间隔（秒）
+INTERVAL = 0.5  # 请求间隔（秒）
 RUN_MINUTES = 180  # 总运行分钟数
 TIMEOUT = httpx.Timeout(10.0, connect=5.0, read=8.0)
 RECREATE_INTERVAL = 5 * 60  # 强制重建连接池间隔（秒）
@@ -24,7 +25,7 @@ MAX_CONSECUTIVE_ERRORS = 4  # 连续失败多少次才重建
 
 # ================== 日志设置 ==================
 logger = logging.getLogger("SocksPing")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 file_handler = logging.FileHandler(
     f"{log_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
@@ -39,7 +40,7 @@ file_handler.setFormatter(
 )
 
 console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setLevel(logging.INFO)
+console_handler.setLevel(logging.WARNING)
 console_handler.setFormatter(
     logging.Formatter(
         "%(asctime)s | %(levelname)-7s | %(message)s", "%Y-%m-%d %H:%M:%S"
@@ -50,7 +51,7 @@ logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
 # ================== 统计 ==================
-rtt_samples = deque(maxlen=5000)
+rtt_samples = deque(maxlen=200_000)
 error_counter = Counter()
 total_count = 0
 success_count = 0
@@ -173,7 +174,7 @@ async def do_request():
             success = True
             success_count += 1
             rtt_samples.append(cost)
-            logger.debug(
+            logger.info(
                 f"请求 #{request_seq} 成功 | RTT: {cost * 1000:.2f}ms | "
                 f"HTTP/{resp.http_version}"
             )
@@ -212,19 +213,17 @@ async def run_loop(start_time):
             logger.info(f"已运行满 {RUN_MINUTES} 分钟，主动结束循环")
             break
 
-        remaining = deadline - now
         try:
             # 最多只给剩余时间执行本次请求（防止单次严重超时超跑）
-            await asyncio.wait_for(
-                do_request(),
-                timeout=max(0.1, remaining),  # 至少给0.1秒，避免负数或极小值
-            )
+            await do_request()
         except asyncio.TimeoutError:
             logger.warning("本次请求执行时间超过剩余时间，强制结束循环")
             break
 
-        # 正常间隔
-        await asyncio.sleep(INTERVAL)
+        elapsed = time.monotonic() - now
+        diff = INTERVAL - elapsed
+        if diff > 0:
+            await asyncio.sleep(diff)
 
 
 async def main():
