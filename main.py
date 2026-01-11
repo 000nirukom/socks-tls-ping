@@ -11,7 +11,10 @@ from httpx import AsyncClient, Limits, AsyncHTTPTransport
 import numpy as np
 
 # ================== 配置 ==================
-PROXY = "socks5://127.0.0.1:" + (sys.argv[1] if len(sys.argv) > 1 else exit(1))
+port = sys.argv[1] if len(sys.argv) > 1 else exit(1)
+log_name = sys.argv[2] if len(sys.argv) > 2 else exit(1)
+
+PROXY = "socks5://127.0.0.1:" + port
 TARGET = "https://www.cloudflare.com/cdn-cgi/trace"
 INTERVAL = 1.0  # 请求间隔（秒）
 RUN_MINUTES = 60  # 总运行分钟数
@@ -24,7 +27,7 @@ logger = logging.getLogger("SocksPing")
 logger.setLevel(logging.DEBUG)
 
 file_handler = logging.FileHandler(
-    f"socks_ping_detailed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
+    f"{log_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
     encoding="utf-8",
 )
 file_handler.setLevel(logging.DEBUG)

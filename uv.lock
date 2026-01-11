@@ -503,7 +503,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "httpx", extras = ["http2", "proxies", "socks"], specifier = ">=0.28.1" },
+    { name = "httpx", extras = ["http2", "socks"], specifier = ">=0.28.1" },
     { name = "httpx-socks", specifier = ">=0.11.0" },
     { name = "matplotlib", specifier = ">=3.10.8" },
 ]
