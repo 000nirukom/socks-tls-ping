@@ -17,7 +17,7 @@ log_name = sys.argv[2] if len(sys.argv) > 2 else exit(1)
 PROXY = "socks5://127.0.0.1:" + port
 TARGET = "https://www.cloudflare.com/cdn-cgi/trace"
 INTERVAL = 1.0  # 请求间隔（秒）
-RUN_MINUTES = 60  # 总运行分钟数
+RUN_MINUTES = 180  # 总运行分钟数
 TIMEOUT = httpx.Timeout(10.0, connect=5.0, read=8.0)
 RECREATE_INTERVAL = 5 * 60  # 强制重建连接池间隔（秒）
 MAX_CONSECUTIVE_ERRORS = 4  # 连续失败多少次才重建
@@ -169,7 +169,7 @@ async def do_request():
         cost_ns = time.perf_counter_ns() - start
         cost = cost_ns / 1e9
 
-        if resp.status_code == 200:
+        if resp.status_code < 400:
             success = True
             success_count += 1
             rtt_samples.append(cost)
@@ -179,7 +179,7 @@ async def do_request():
             )
         else:
             error_counter[f"HTTP_{resp.status_code}"] += 1
-            logger.warning(f"请求 #{request_seq} 非200 | 状态码: {resp.status_code}")
+            logger.warning(f"请求 #{request_seq} 失败 | 状态码:: {resp.status_code}")
 
     except Exception as e:
         error_counter[type(e).__name__] += 1
@@ -203,16 +203,34 @@ async def do_request():
 
 
 async def run_loop(start_time):
-    """主循环，方便被取消"""
-    while time.time() - start_time < RUN_MINUTES * 60:
-        await do_request()
+    """主循环，带运行时间强制保护"""
+    deadline = start_time + RUN_MINUTES * 60
+
+    while True:
+        now = time.monotonic()
+        if now >= deadline:
+            logger.info(f"已运行满 {RUN_MINUTES} 分钟，主动结束循环")
+            break
+
+        remaining = deadline - now
+        try:
+            # 最多只给剩余时间执行本次请求（防止单次严重超时超跑）
+            await asyncio.wait_for(
+                do_request(),
+                timeout=max(0.1, remaining),  # 至少给0.1秒，避免负数或极小值
+            )
+        except asyncio.TimeoutError:
+            logger.warning("本次请求执行时间超过剩余时间，强制结束循环")
+            break
+
+        # 正常间隔
         await asyncio.sleep(INTERVAL)
 
 
 async def main():
     global client
     logger.info("=" * 70)
-    logger.info("Socks5 连接质量详细压测程序 v2（修复 Ctrl+C 版）")
+    logger.info("Socks5 连接质量详细压测程序 v2（修复 Ctrl+C + 时间限制版）")
     logger.info(f"代理: {PROXY}")
     logger.info(f"目标: {TARGET}")
     logger.info(f"运行时长: {RUN_MINUTES} 分钟")
@@ -234,7 +252,7 @@ async def main():
     print("按 Ctrl+C 可随时结束\n")
     print("-" * 100)
 
-    start_time = time.time()
+    start_time = time.monotonic()  # 使用单调时钟，更可靠
     loop_task = asyncio.create_task(run_loop(start_time))
 
     try:
@@ -280,3 +298,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\n程序已通过外部 KeyboardInterrupt 退出")
+        logger.info("程序通过外部 KeyboardInterrupt 退出")

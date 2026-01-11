@@ -2,12 +2,26 @@
 import re
 import statistics
 import sys
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from datetime import datetime, timedelta
 import numpy as np
-from collections import defaultdict
+
 import argparse
+from pathlib import Path
+
+
+FONT_PATH = Path("./fonts/fusion-pixel-12px-proportional-zh_hans.ttf")
+
+if FONT_PATH.exists():
+    from matplotlib import font_manager
+
+    fm: font_manager.FontManager = font_manager.fontManager
+    fm.addfont(FONT_PATH)
+    prop = font_manager.FontProperties(fname=FONT_PATH)
+    plt.rcParams["font.family"] = prop.get_name()
+    plt.rc("font", **{"size": 12})
 
 # ────────────────────────────────────────────────
 #  Argument parsing
@@ -15,25 +29,11 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="Path to the log file")
 parser.add_argument(
-    "--max-points",
-    type=int,
-    default=8000,
-    help="Maximum number of points to plot (default: 8000)",
-)
-parser.add_argument(
-    "--bin-seconds",
-    type=int,
-    default=30,
-    help="Time bin size for aggregation / downsampling in seconds",
-)
-parser.add_argument(
     "--no-spike-color", action="store_true", help="Don't color spikes differently"
 )
 args = parser.parse_args()
 
 LOG_FILE = args.logfile
-MAX_PLOT_POINTS = args.max_points
-BIN_SECONDS = args.bin_seconds
 
 # ────────────────────────────────────────────────
 #  Parse log
@@ -104,82 +104,29 @@ print(f"Number of spikes   : {len(spikes):,d}  ({len(spikes) / n * 100:.2f}%)")
 if spikes:
     print(f"  → worst spike   : {max(spikes, key=lambda x: x[1])[1]:.2f} ms")
 
-# ────────────────────────────────────────────────
-#  Downsampling / binning for plot (very important for > 50k points)
-# ────────────────────────────────────────────────
-if len(rtt_list) > MAX_PLOT_POINTS * 1.5:
-    print(
-        f"\nDownsampling plot data ({len(rtt_list):,} → ~{MAX_PLOT_POINTS:,} points or fewer)"
-    )
-
-    # Bin by time
-    bins = defaultdict(list)
-    start_time = rtt_list[0][0]
-
-    for dt, rtt, _ in rtt_list:
-        age_sec = (dt - start_time).total_seconds()
-        bin_idx = int(age_sec // BIN_SECONDS)
-        bins[bin_idx].append(rtt)
-
-    # Build binned data
-    bin_times = []
-    bin_medians = []
-    bin_p90s = []
-    bin_p99s = []
-
-    for idx in sorted(bins):
-        vals = bins[idx]
-        if not vals:
-            continue
-        t = start_time + timedelta(seconds=idx * BIN_SECONDS + BIN_SECONDS / 2)
-        bin_times.append(t)
-        bin_medians.append(np.median(vals))
-        bin_p90s.append(np.percentile(vals, 90))
-        bin_p99s.append(np.percentile(vals, 99))
-
-    plot_times = bin_times
-    plot_main = bin_medians
-    plot_extra = {"p90": bin_p90s, "p99": bin_p99s}
-    title_suffix = f" (binned {BIN_SECONDS}s — median / p90 / p99)"
-
-else:
-    # No downsampling needed
-    plot_times = [dt for dt, _, _ in rtt_list]
-    plot_main = rtt_values
-    plot_extra = {}
-    title_suffix = ""
+plot_times = [dt for dt, _, _ in rtt_list]
+plot_main = rtt_values
+plot_extra = {}
 
 # ────────────────────────────────────────────────
 #  Plot
 # ────────────────────────────────────────────────
 plt.figure(figsize=(14, 7))
 
-if len(plot_times) <= MAX_PLOT_POINTS or not plot_extra:
-    # Scatter only when we have reasonable number of points
-    if args.no_spike_color:
-        colors = "royalblue"
-    else:
-        colors = ["indianred" if r > threshold else "cornflowerblue" for r in plot_main]
-
-    plt.scatter(
-        plot_times,
-        plot_main,
-        c=colors,
-        s=18,
-        alpha=0.6,
-        edgecolors="none",
-        label="RTT per request" if len(plot_times) < 3000 else "RTT (sampled)",
-    )
-
+if args.no_spike_color:
+    colors = "royalblue"
 else:
-    # Binned mode → line + bands
-    plt.plot(
-        plot_times, plot_extra["p99"], lw=1.1, color="salmon", alpha=0.9, label="99th %"
-    )
-    plt.plot(
-        plot_times, plot_extra["p90"], lw=1.4, color="orange", alpha=0.9, label="90th %"
-    )
-    plt.plot(plot_times, plot_main, lw=2.0, color="darkblue", label="Median RTT")
+    colors = ["indianred" if r > threshold else "cornflowerblue" for r in plot_main]
+
+plt.scatter(
+    plot_times,
+    plot_main,
+    c=colors,
+    s=18,
+    alpha=0.6,
+    edgecolors="none",
+    label="RTT per request" if len(plot_times) < 3000 else "RTT (sampled)",
+)
 
 plt.axhline(
     avg_rtt, color="green", ls="--", lw=1.8, alpha=0.9, label=f"Avg = {avg_rtt:.1f} ms"
@@ -200,7 +147,7 @@ plt.xticks(rotation=38, ha="right")
 
 plt.ylabel("RTT [ms]")
 plt.xlabel("Time")
-plt.title(f"Socks5 RTT – {LOG_FILE}{title_suffix}")
+plt.title(f"HTTPS RTT – {LOG_FILE.split('_')[0]}")
 plt.grid(True, alpha=0.35, ls="--")
 plt.legend(loc="upper right", framealpha=0.92)
 plt.tight_layout()
