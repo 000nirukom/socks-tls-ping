@@ -4,6 +4,7 @@ import statistics
 import sys
 from datetime import datetime
 
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
@@ -11,6 +12,7 @@ import numpy as np
 import argparse
 from pathlib import Path
 
+matplotlib.use("QtAgg")
 
 FONT_PATH = Path("./fonts/fusion-pixel-12px-proportional-zh_hans.ttf")
 
