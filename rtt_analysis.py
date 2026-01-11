@@ -2,90 +2,168 @@
 import re
 import statistics
 import matplotlib.pyplot as plt
+import numpy as np
+from datetime import datetime
 import sys
 
-# Log file path
+# ==================== Config ====================
 LOG_FILE = sys.argv[1] if len(sys.argv) > 1 else exit(1)
+SPIKE_THRESHOLD_FACTOR = 3.0
 
-# Spike threshold factor
-SPIKE_THRESHOLD_FACTOR = 3
+# How many points to show in the plot (recommended 5k–20k)
+MAX_PLOT_POINTS = 10000
 
-# Parse RTT from log
-rtt_list = []
+# ==================== Parsing ====================
+rtt_values = []
+timestamps = []  # will store seconds since start
+request_numbers = []  # original request #
 
-# Only match normal requests, ignore "preheat" lines
 pattern = re.compile(r"请求 #(\d+) 成功 \| RTT: ([\d.]+)ms")
+
+print("Reading log file...", end="", flush=True)
 
 with open(LOG_FILE, "r", encoding="utf-8") as f:
     for line in f:
         if "[预热 成功]" in line:
-            continue  # skip preheat requests
-        date_time = line.strip().split(" | ")[0]
+            continue
+
         match = pattern.search(line)
-        if match:
-            req_num = int(match.group(1))
-            rtt = float(match.group(2))
-            rtt_list.append((date_time, rtt))
+        if not match:
+            continue
 
-# Extract RTT values
-rtt_values = [rtt for _, rtt in rtt_list]
+        req_num = int(match.group(1))
+        rtt = float(match.group(2))
 
-# Statistics
+        # Extract timestamp (first part before first " | ")
+        try:
+            dt_str = line.split(" | ", 1)[0].strip()
+            dt = datetime.strptime(
+                dt_str, "%Y-%m-%d %H:%M:%S"
+            )  # adjust format if needed
+            seconds_since_start = (dt - datetime(1970, 1, 1)).total_seconds()
+        except:
+            # fallback: just use request number
+            seconds_since_start = req_num
+
+        rtt_values.append(rtt)
+        timestamps.append(seconds_since_start)
+        request_numbers.append(req_num)
+
+print(f" done. Found {len(rtt_values):,} normal requests.")
+
+if not rtt_values:
+    print("No valid RTT data found.")
+    sys.exit(0)
+
+# ==================== Statistics ====================
 avg_rtt = statistics.mean(rtt_values)
-max_rtt = max(rtt_values)
-min_rtt = min(rtt_values)
 median_rtt = statistics.median(rtt_values)
-stddev_rtt = statistics.stdev(rtt_values)
-percentile_95 = sorted(rtt_values)[int(len(rtt_values) * 0.95) - 1]
+min_rtt = min(rtt_values)
+max_rtt = max(rtt_values)
+stddev_rtt = statistics.stdev(rtt_values) if len(rtt_values) > 1 else 0
+p95 = np.percentile(rtt_values, 95)
 
-# Spike detection
 threshold = avg_rtt + SPIKE_THRESHOLD_FACTOR * stddev_rtt
-spike_requests = [(num, rtt) for num, rtt in rtt_list if rtt > threshold]
 
-# Print results
-print("=== Socks5 RTT Analysis (Preheat Ignored) ===")
-print(f"Total Requests     : {len(rtt_values)}")
-print(f"Average RTT        : {avg_rtt:.2f} ms")
-print(f"Median RTT         : {median_rtt:.2f} ms")
-print(f"Max RTT            : {max_rtt:.2f} ms")
-print(f"Min RTT            : {min_rtt:.2f} ms")
-print(f"Standard Deviation : {stddev_rtt:.2f} ms")
-print(f"95th Percentile RTT: {percentile_95:.2f} ms")
-print(f"Spike Threshold    : {threshold:.2f} ms")
-print(f"Spike Requests     : {spike_requests}")
+spike_indices = [i for i, rtt in enumerate(rtt_values) if rtt > threshold]
+spike_requests = [(request_numbers[i], rtt_values[i]) for i in spike_indices]
 
-# ========== Scatter Plot ==========
+# ==================== Print results ====================
+print("\n=== Socks5 RTT Analysis (Preheat Ignored) ===")
+print(f"Total Requests      : {len(rtt_values):,}")
+print(f"Average RTT         : {avg_rtt:.2f} ms")
+print(f"Median RTT          : {median_rtt:.2f} ms")
+print(f"Min / Max RTT       : {min_rtt:.2f} – {max_rtt:.2f} ms")
+print(f"Std Deviation       : {stddev_rtt:.2f} ms")
+print(f"95th Percentile     : {p95:.2f} ms")
+print(f"Spike Threshold     : {threshold:.2f} ms")
+print(f"Detected Spikes     : {len(spike_requests):,}")
+
+if spike_requests:
+    print("\nFirst 10 spikes (request #, RTT):")
+    for req, rtt in spike_requests[:10]:
+        print(f"  #{req:6d}  {rtt:6.2f} ms")
+
+# ==================== Plotting ====================
+if len(rtt_values) <= MAX_PLOT_POINTS:
+    # Small dataset → plot everything
+    plot_times = np.array(timestamps)
+    plot_rtts = np.array(rtt_values)
+    plot_reqs = np.array(request_numbers)
+else:
+    # Downsample to MAX_PLOT_POINTS points
+    print(f"Downsampling plot to ~{MAX_PLOT_POINTS:,} points...")
+    indices = np.linspace(0, len(rtt_values) - 1, MAX_PLOT_POINTS, dtype=int)
+    plot_times = np.array(timestamps)[indices]
+    plot_rtts = np.array(rtt_values)[indices]
+    plot_reqs = np.array(request_numbers)[indices]
+
+# Colors
+colors = np.array(["red" if r > threshold else "blue" for r in plot_rtts])
+
 plt.figure(figsize=(14, 6))
 
-req_dts = [dt for dt, _ in rtt_list]
-rtt_vals = [rtt for _, rtt in rtt_list]
+# Main scatter
+sc = plt.scatter(plot_reqs, plot_rtts, c=colors, s=16, alpha=0.7, edgecolors="none")
 
-# Colors: red for spike, blue for normal
-colors = ["red" if rtt > threshold else "blue" for rtt in rtt_vals]
+# Optional: highlight spikes more clearly
+if spike_indices:
+    spike_plot_indices = [
+        i
+        for i in range(len(plot_reqs))
+        if plot_reqs[i] in [request_numbers[j] for j in spike_indices]
+    ]
+    if spike_plot_indices:
+        plt.scatter(
+            plot_reqs[spike_plot_indices],
+            plot_rtts[spike_plot_indices],
+            c="red",
+            s=40,
+            marker="x",
+            label="Spike",
+            zorder=10,
+        )
 
-plt.scatter(req_dts, rtt_vals, c=colors, s=20, alpha=0.7, edgecolors="k", label="RTT")
-
-# Draw average and spike threshold lines
+# Reference lines
 plt.axhline(
     avg_rtt,
     color="green",
     linestyle="--",
-    linewidth=2,
-    label=f"Average RTT ({avg_rtt:.2f} ms)",
+    linewidth=1.5,
+    label=f"Avg = {avg_rtt:.2f} ms",
 )
 plt.axhline(
     threshold,
     color="orange",
     linestyle="--",
-    linewidth=2,
-    label=f"Spike Threshold ({threshold:.2f} ms)",
+    linewidth=1.5,
+    label=f"Spike threshold = {threshold:.2f} ms",
 )
 
-plt.xlabel("Request Number")
+plt.xlabel("Request number")
 plt.ylabel("RTT (ms)")
-plt.title(LOG_FILE)
-plt.suptitle("Socks5 RTT Scatter Plot (Red = Spike, Preheat Ignored)")
+plt.title(f"Socks5 RTT - {LOG_FILE}\n(Preheat ignored • {len(rtt_values):,} requests)")
+plt.grid(True, linestyle="--", alpha=0.4)
 plt.legend()
-plt.grid(True, linestyle="--", alpha=0.5)
+
+# Optional: secondary x-axis with real time
+if len(timestamps) > 10:
+    try:
+        first_ts = datetime.fromtimestamp(timestamps[0])
+        last_ts = datetime.fromtimestamp(timestamps[-1])
+
+        def format_func(x, pos):
+            # x is request number → approximate time
+            frac = x / len(rtt_values)
+            ts = first_ts + (last_ts - first_ts) * frac
+            return ts.strftime("%H:%M:%S")
+
+        sec_ax = plt.secondary_xaxis("top", functions=(lambda x: x, lambda x: x))
+        sec_ax.set_xlabel("Approximate time")
+        sec_ax.set_xticks(plt.xticks()[0])
+        sec_ax.xaxis.set_major_formatter(plt.FuncFormatter(format_func))
+    except:
+        pass  # fallback to only request number
+
 plt.tight_layout()
 plt.show()
