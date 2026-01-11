@@ -133,9 +133,9 @@ def print_status(final=False):
 
     status = (
         f"[{now}] "
-        f"#{request_seq:4d} "
-        f"总:{total_count:5d} "
-        f"成功:{success_count:5d} "
+        f"#{request_seq:7d} "
+        f"总:{total_count:7d} "
+        f"成功:{success_count:7d} "
         f"RTT: {rtt_text} "
         f"连续Err:{consecutive_errors}"
     )
@@ -213,12 +213,7 @@ async def run_loop(start_time):
             logger.info(f"已运行满 {RUN_MINUTES} 分钟，主动结束循环")
             break
 
-        try:
-            # 最多只给剩余时间执行本次请求（防止单次严重超时超跑）
-            await do_request()
-        except asyncio.TimeoutError:
-            logger.warning("本次请求执行时间超过剩余时间，强制结束循环")
-            break
+        await do_request()
 
         elapsed = time.monotonic() - now
         diff = INTERVAL - elapsed
