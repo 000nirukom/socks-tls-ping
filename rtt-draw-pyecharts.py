@@ -93,7 +93,10 @@ visualmap_opts = opts.VisualMapOpts(
 )
 
 chart = (
-    Scatter(init_opts=opts.InitOpts(width="1200px", height="600px"))
+    Scatter(
+        init_opts=opts.InitOpts(width="1200px", height="600px"),
+        render_opts=opts.RenderOpts(is_embed_js=False),
+    )
     .add_xaxis(rtt_dts)
     .add_yaxis(
         series_name="RTT",
@@ -149,4 +152,15 @@ chart = (
         visualmap_opts=visualmap_opts,
     )
 )
-chart.render(f"rtt_{log_name}.html")
+filename = f"rtt_{log_name}.html"
+html = chart.render_embed()
+html = html.replace(
+    "</head>",
+    """
+<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+</head>""",
+)
+html = html.replace("scatter", "scatterGL")
+
+with open(filename, "w", encoding="utf-8") as f:
+    f.write(html)
