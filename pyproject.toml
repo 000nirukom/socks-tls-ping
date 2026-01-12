@@ -4,8 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-    "httpx[http2,socks]>=0.28.1",
-    "matplotlib>=3.10.8",
-    "pyside6>=6.10.1",
+dependencies = ["httpx[http2,socks]>=0.28.1"]
+
+[project.optional-dependencies]
+matplotlib = ["matplotlib>=3.10.8", "pyside6>=6.10.1"]
+pyecharts = [
+    "pyecharts>=2.0.9",
 ]

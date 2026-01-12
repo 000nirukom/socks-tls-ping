@@ -10,3 +10,5 @@ wheels/
 .venv
 
 /*.log
+
+/*.html
