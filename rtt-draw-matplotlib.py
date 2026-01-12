@@ -138,7 +138,7 @@ plt.axhline(
     color="darkorange",
     ls="--",
     lw=1.8,
-    alpha=0.9,
+    alpha=0.4,
     label=f"Spike threshold = {threshold:.1f} ms",
 )
 
