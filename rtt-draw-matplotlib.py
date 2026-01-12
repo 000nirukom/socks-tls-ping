@@ -7,6 +7,7 @@ from datetime import datetime
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib.ticker import StrMethodFormatter
 import numpy as np
 
 import argparse
@@ -88,11 +89,14 @@ median_rtt = statistics.median(rtt_values)
 min_rtt = min(rtt_values)
 max_rtt = max(rtt_values)
 std_rtt = statistics.stdev(rtt_values) if n >= 2 else 0
+p90 = np.percentile(rtt_values, 90)
 p95 = np.percentile(rtt_values, 95)
+p99 = np.percentile(rtt_values, 99)
 
 threshold = avg_rtt + 3 * std_rtt
 
 spikes = [(dt, rtt, num) for dt, rtt, num in rtt_list if rtt > threshold]
+spike_rate = len(spikes) / n * 100
 
 print("=== Socks5 RTT Analysis (Preheat Ignored) ===")
 print(f"Total requests     : {n:,d}")
@@ -102,7 +106,7 @@ print(f"Min / Max RTT      : {min_rtt:6.2f} – {max_rtt:6.2f} ms")
 print(f"Std deviation      : {std_rtt:6.2f} ms")
 print(f"95th percentile    : {p95:6.2f} ms")
 print(f"Spike threshold    : {threshold:6.2f} ms")
-print(f"Number of spikes   : {len(spikes):,d}  ({len(spikes) / n * 100:.2f}%)")
+print(f"Number of spikes   : {len(spikes):,d}  ({spike_rate:.2f}%)")
 if spikes:
     print(f"  → worst spike   : {max(spikes, key=lambda x: x[1])[1]:.2f} ms")
 
@@ -127,7 +131,7 @@ plt.scatter(
     s=18,
     alpha=0.6,
     edgecolors="none",
-    label="RTT per request" if len(plot_times) < 3000 else "RTT (sampled)",
+    label="RTT per request",
 )
 
 plt.axhline(
@@ -142,6 +146,12 @@ plt.axhline(
     label=f"Spike threshold = {threshold:.1f} ms",
 )
 
+# log-scale
+plt.gca().set_ylim(bottom=min_rtt - 1, top=max_rtt + 1)
+plt.gca().set_yscale("log")
+plt.gca().yaxis.set_major_formatter(StrMethodFormatter("{x:.2f}"))
+plt.gca().yaxis.set_minor_formatter(StrMethodFormatter("{x:.2f}"))
+
 # ── Nice date formatting ───────────────────────────────
 plt.gca().xaxis.set_major_formatter(mdates.AutoDateFormatter(mdates.AutoDateLocator()))
 plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator(maxticks=12))
@@ -153,5 +163,7 @@ plt.title(f"HTTPS RTT – {LOG_FILE.split('_')[0]}")
 plt.grid(True, alpha=0.35, ls="--")
 plt.legend(loc="upper right", framealpha=0.92)
 plt.tight_layout()
+
+plt.figtext(0.1, 0.02, f"p95: {p95:.2f}, p99: {p99:.2f} | spike {spike_rate:.2f}%")
 
 plt.show()

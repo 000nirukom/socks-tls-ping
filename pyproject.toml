@@ -8,6 +8,4 @@ dependencies = ["httpx[http2,socks]>=0.28.1"]
 
 [project.optional-dependencies]
 matplotlib = ["matplotlib>=3.10.8", "pyside6>=6.10.1"]
-pyecharts = [
-    "pyecharts>=2.0.9",
-]
+pyecharts = ["pyecharts>=2.0.9"]
