@@ -17,7 +17,7 @@ log_name = sys.argv[2] if len(sys.argv) > 2 else exit(1)
 
 PROXY = "socks5://127.0.0.1:" + port
 TARGET = "https://www.cloudflare.com/cdn-cgi/trace"
-INTERVAL = 0.5  # 请求间隔（秒）
+INTERVAL = 1  # 请求间隔（秒）
 RUN_MINUTES = 180  # 总运行分钟数
 TIMEOUT = httpx.Timeout(10.0, connect=5.0, read=8.0)
 RECREATE_INTERVAL = 5 * 60  # 强制重建连接池间隔（秒）
