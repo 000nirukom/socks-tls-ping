@@ -6,6 +6,7 @@ from pathlib import Path
 
 from pyecharts import options as opts
 from pyecharts.charts import Scatter
+from pyecharts.commons.utils import JsCode
 
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="Path to the log file")
@@ -100,32 +101,38 @@ chart = (
         symbol_size=5,
     )
     .set_series_opts(
-        label_opts=opts.LabelOpts(is_show=False),
+        label_opts=opts.LabelOpts(is_show=False),  # series data labels off
         markline_opts=opts.MarkLineOpts(
             data=[
                 opts.MarkLineItem(
+                    y=threshold,
+                    name="THR",  # ← this becomes {name} in formatter
+                ),
+                opts.MarkLineItem(
                     y=avg_rtt,
-                    # 文字显示在左侧（图表外面）
-                    linestyle_opts=opts.LineStyleOpts(
-                        color="#176f58",
-                        width=2.5,
-                        type_="dashed",  # ← 改成虚线（也可以用 "dotted" 更细碎的点线）
-                        opacity=0.9,
-                    ),
+                    name="AVG",
                 ),
             ],
+            linestyle_opts=opts.LineStyleOpts(
+                width=2.5,
+                type_="dashed",
+                opacity=0.9,
+                color="#5DBA58",
+            ),
             label_opts=opts.LabelOpts(
-                position="start",  # start = 最左侧
-                formatter=f"平均: {avg_rtt:.2f} ms",
-                color="#176f58",
-                font_size=13,
+                position="start",
+                # Use {name} for different prefix, {c} for the y-value
+                formatter=JsCode(
+                    "(param) => `${param.name}: ${param.value.toFixed(2)} ms`"
+                ),
+                color="#000",  # or make dynamic if needed (harder)
+                font_size=15,
                 font_weight="bold",
-                # 让文字稍微往右偏移一点，避免贴边太死
-                distance=10,  # ← 关键：向右偏移距离（像素）
+                distance=10,
                 vertical_align="middle",
                 horizontal_align="right",
             ),
-            symbol=["none", "none"],  # 不显示端点
+            symbol=["none", "none"],
         ),
     )
     .set_global_opts(
