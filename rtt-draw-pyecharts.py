@@ -47,6 +47,7 @@ rtt_values = [rtt for _, rtt in rtt_list]
 
 avg_rtt = statistics.mean(rtt_values)
 std_rtt = statistics.stdev(rtt_values) if len(rtt_values) >= 2 else 0
+min_rtt = min(rtt_values)
 max_rtt = max(rtt_values)
 
 threshold = round(avg_rtt + 3 * std_rtt, 2)
@@ -105,7 +106,13 @@ chart = (
                 opts.MarkLineItem(
                     y=avg_rtt,
                     # 文字显示在左侧（图表外面）
-                )
+                    linestyle_opts=opts.LineStyleOpts(
+                        color="#176f58",
+                        width=2.5,
+                        type_="dashed",  # ← 改成虚线（也可以用 "dotted" 更细碎的点线）
+                        opacity=0.9,
+                    ),
+                ),
             ],
             label_opts=opts.LabelOpts(
                 position="start",  # start = 最左侧
@@ -119,18 +126,17 @@ chart = (
                 horizontal_align="right",
             ),
             symbol=["none", "none"],  # 不显示端点
-            linestyle_opts=opts.LineStyleOpts(
-                color="#176f58",
-                width=2.5,
-                type_="dashed",  # ← 改成虚线（也可以用 "dotted" 更细碎的点线）
-                opacity=0.9,
-            ),
         ),
     )
     .set_global_opts(
         title_opts=opts.TitleOpts(title=log_name),
         xaxis_opts=opts.AxisOpts(type_="time", name="Time"),
-        yaxis_opts=opts.AxisOpts(type_="value", name="RTT (ms)"),
+        yaxis_opts=opts.AxisOpts(
+            type_="log",
+            min_=round(min_rtt, 2),
+            max_=round(max_rtt, 2),
+            name="RTT (ms)",
+        ),
         toolbox_opts=opts.ToolboxOpts(),
         datazoom_opts=datazoom_opts,
         visualmap_opts=visualmap_opts,
