@@ -10,10 +10,13 @@ from pyecharts.commons.utils import JsCode
 
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="Path to the log file")
+parser.add_argument("--webgl", action="store_true", help="Accelerate with WebGL")
 args = parser.parse_args()
 
 LOG_FILE = Path(args.logfile)
 log_name = LOG_FILE.stem.split("_")[0]
+
+ENABLE_WEBGL = args.webgl
 
 rtt_list: list[tuple[datetime, float]] = []
 pattern = re.compile(r"请求 #(\d+) 成功 \| RTT: ([\d.]+)ms")
@@ -153,14 +156,17 @@ chart = (
     )
 )
 filename = f"rtt_{log_name}.html"
+
 html = chart.render_embed()
-html = html.replace(
-    "</head>",
-    """
-<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
-</head>""",
-)
-html = html.replace("scatter", "scatterGL")
+
+if ENABLE_WEBGL:
+    html = html.replace(
+        "</head>",
+        """
+    <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+    </head>""",
+    )
+    html = html.replace("scatter", "scatterGL")
 
 with open(filename, "w", encoding="utf-8") as f:
     f.write(html)
