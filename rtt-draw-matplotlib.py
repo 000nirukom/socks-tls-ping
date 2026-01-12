@@ -149,8 +149,8 @@ plt.axhline(
 # log-scale
 plt.gca().set_ylim(bottom=min_rtt - 1, top=max_rtt + 1)
 plt.gca().set_yscale("log")
-plt.gca().yaxis.set_major_formatter(StrMethodFormatter("{x:.2f}"))
-plt.gca().yaxis.set_minor_formatter(StrMethodFormatter("{x:.2f}"))
+plt.gca().yaxis.set_major_formatter(StrMethodFormatter("{x:.0f}"))
+plt.gca().yaxis.set_minor_formatter(StrMethodFormatter("{x:.0f}"))
 
 # ── Nice date formatting ───────────────────────────────
 plt.gca().xaxis.set_major_formatter(mdates.AutoDateFormatter(mdates.AutoDateLocator()))
