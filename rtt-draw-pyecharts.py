@@ -136,4 +136,4 @@ chart = (
         visualmap_opts=visualmap_opts,
     )
 )
-chart.render("rtt_scatter_plot.html")
+chart.render(f"rtt_{log_name}.html")
