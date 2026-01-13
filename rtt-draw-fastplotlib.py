@@ -47,9 +47,11 @@ with open(LOG_FILE, "r", encoding="utf-8") as f:
         rtt_list.append((dt, rtt))
 
 
-base_ts = rtt_list[0][0].timestamp()
+rtt_dt = [dt for dt, _ in rtt_list]
 
-rtt_tsdiff: list[float] = [dt.timestamp() - base_ts for dt, _ in rtt_list]
+base_ts = rtt_dt[0].timestamp()
+rtt_tsdiff: list[float] = [dt.timestamp() - base_ts for dt in rtt_dt]
+
 rtt_values = [rtt for _, rtt in rtt_list]
 
 avg_rtt = statistics.mean(rtt_values)
@@ -118,11 +120,21 @@ def tick_format_y(rtt: float, _min, _max) -> str:
 figure[0, 0].axes.x.tick_format = tick_format_x
 figure[0, 0].axes.y.tick_format = tick_format_y
 
-is_moving = False
-vertex_index = None
+figure[0, 0].camera.maintain_aspect = False
 
-# todo: fix tooltip x/y value display
-figure.show_tooltips = False
+
+def tooltip_info(ev) -> str:
+    # get index of the scatter point that is being hovered
+    index: int = ev.pick_info["vertex_index"]
+    date_time = rtt_dt[index]
+    rtt = rtt_values[index]
+
+    return f"""{rtt}ms
+{date_time.strftime("%H:%M:%S")}"""
+
+
+figure.tooltip_manager.register(scatter, custom_info=tooltip_info)
+
 figure.show()
 
 
