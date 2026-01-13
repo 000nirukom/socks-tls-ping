@@ -73,6 +73,7 @@ data = np.column_stack([xs, ys])
 
 figure = fpl.Figure(
     size=(700, 560),
+    names=[log_name],
 )
 
 # add a scatter
@@ -84,17 +85,8 @@ scatter = figure[0, 0].add_scatter(
 )
 
 # manual log-scale transformation for line values
-avg_rtt = log(avg_rtt, log_base)
-threshold = log(threshold, log_base)
-
-figure[0, 0].add_line(
-    data=np.array([(xs[0], avg_rtt), (xs[-1], avg_rtt)]),
-    colors="g",
-)
-figure[0, 0].add_line(
-    data=np.array([(xs[0], threshold), (xs[-1], threshold)]),
-    colors="y",
-)
+avg_rtt_log = log(avg_rtt, log_base)
+threshold_log = log(threshold, log_base)
 
 min_dt = rtt_dt[0]
 max_dt = rtt_dt[-1]
@@ -130,6 +122,16 @@ figure[0, 0].axes.y.tick_format = tick_format_y
 figure[0, 0].camera.maintain_aspect = False
 
 
+line_avg = figure[0, 0].add_line(
+    data=np.array([(xs[0], avg_rtt_log), (xs[-1], avg_rtt_log)]),
+    colors="g",
+)
+line_thr = figure[0, 0].add_line(
+    data=np.array([(xs[0], threshold_log), (xs[-1], threshold_log)]),
+    colors="y",
+)
+
+
 def tooltip_info(ev) -> str:
     # get index of the scatter point that is being hovered
     index: int = ev.pick_info["vertex_index"]
@@ -140,13 +142,15 @@ def tooltip_info(ev) -> str:
 {date_time.strftime("%H:%M:%S")}"""
 
 
-# Custom tooltips for scatter chart
+# Custom tooltips
 figure.tooltip_manager.register(scatter, custom_info=tooltip_info)
+figure.tooltip_manager.register(line_avg, custom_info=lambda _: f"Avg: {avg_rtt:.2f}ms")
+figure.tooltip_manager.register(
+    line_thr, custom_info=lambda _: f"THR: {threshold:.2f}ms"
+)
+
 figure.show()
 
 
-# NOTE: fpl.loop.run() should not be used for interactive sessions
-# See the "JupyterLab and IPython" section in the user guide
 if __name__ == "__main__":
-    print(__doc__)
     fpl.loop.run()
