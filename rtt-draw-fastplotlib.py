@@ -48,7 +48,7 @@ with open(LOG_FILE, "r", encoding="utf-8") as f:
 
 base_ts = rtt_list[0][0].timestamp()
 
-rtt_ts: list[float] = [dt.timestamp() - base_ts for dt, _ in rtt_list]
+rtt_tsdiff: list[float] = [dt.timestamp() - base_ts for dt, _ in rtt_list]
 rtt_values = [rtt for _, rtt in rtt_list]
 
 avg_rtt = statistics.mean(rtt_values)
@@ -60,13 +60,17 @@ threshold = avg_rtt + 3 * std_rtt
 
 colors = ["r" if rtt >= threshold else "#176f58" for rtt in rtt_values]
 
-xs = rtt_ts
+xs = rtt_tsdiff
 ys = rtt_values
+
+min_ts = datetime.fromtimestamp(base_ts + xs[0])
+max_ts = datetime.fromtimestamp(base_ts + xs[-1])
 
 data = np.column_stack([xs, ys])
 
-figure = fpl.Figure(size=(700, 560))
-
+figure = fpl.Figure(
+    size=(700, 560),
+)
 
 # add a scatter
 scatter = figure[0, 0].add_scatter(
@@ -76,8 +80,15 @@ scatter = figure[0, 0].add_scatter(
     edge_width=0,
 )
 
-min_ts = datetime.fromtimestamp(base_ts + xs[0])
-max_ts = datetime.fromtimestamp(base_ts + xs[-1])
+figure[0, 0].add_line(
+    data=np.array([(xs[0], avg_rtt), (xs[-1], avg_rtt)]),
+    colors="g",
+)
+figure[0, 0].add_line(
+    data=np.array([(xs[0], threshold), (xs[-1], threshold)]),
+    colors="y",
+)
+
 formatter = "%d %H:%M" if max_ts.day != min_ts.day else "%H:%M:%S"
 
 
@@ -95,7 +106,8 @@ figure[0, 0].axes.x.tick_format = tick_format
 is_moving = False
 vertex_index = None
 
-
+# todo: tooltip x/y value display
+figure.show_tooltips = True
 figure.show()
 
 
