@@ -62,6 +62,7 @@ std_rtt = statistics.stdev(rtt_values) if len(rtt_values) >= 2 else 0
 threshold = avg_rtt + 3 * std_rtt
 
 colors = ["r" if rtt >= threshold else "#176f58" for rtt in rtt_values]
+spike_rate = colors.count("r") / len(rtt_values) * 100
 
 xs = rtt_tsdiff
 # manual log-scale transformation for y values
@@ -146,7 +147,7 @@ def tooltip_info(ev) -> str:
 figure.tooltip_manager.register(scatter, custom_info=tooltip_info)
 figure.tooltip_manager.register(line_avg, custom_info=lambda _: f"Avg: {avg_rtt:.2f}ms")
 figure.tooltip_manager.register(
-    line_thr, custom_info=lambda _: f"THR: {threshold:.2f}ms"
+    line_thr, custom_info=lambda _: f"THR: {threshold:.2f}ms\nspike {spike_rate:.2f}%"
 )
 
 figure.show()
