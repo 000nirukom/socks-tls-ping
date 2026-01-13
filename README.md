@@ -24,11 +24,11 @@ Typical use cases:
 
 We have different image draw backend,
 
-|               | matplotlib | pyecharts | fastplotlib |
-| ------------: | :--------: | :-------: | :---------: |
-|   Performance |  Not bad   |  Garbage  |    Best     |
-| Interactivity |    Good    |   Best    |   Usable    |
-| informativity |    Best    |  Not bad  |     WIP     |
+|               | matplotlib | pyecharts |           fastplotlib           |
+| ------------: | :--------: | :-------: | :-----------------------------: |
+|   Performance |  Not bad   |  Garbage  |              Best               |
+| Interactivity |    Good    |   Best    | Pretty good<br>Smooth rendering |
+| Informativity |    Best    |  Not bad  |             Not bad             |
 
 For the interactivity, matplotlib provides tooltip with focused region view,
 while pyecharts also provides sliding time range selector.
