@@ -89,6 +89,7 @@ median_rtt = statistics.median(rtt_values)
 min_rtt = min(rtt_values)
 max_rtt = max(rtt_values)
 std_rtt = statistics.stdev(rtt_values) if n >= 2 else 0
+p80 = np.percentile(rtt_values, 80)
 p90 = np.percentile(rtt_values, 90)
 p95 = np.percentile(rtt_values, 95)
 p99 = np.percentile(rtt_values, 99)
@@ -135,7 +136,20 @@ plt.scatter(
 )
 
 plt.axhline(
-    avg_rtt, color="green", ls="--", lw=1.8, alpha=0.9, label=f"Avg = {avg_rtt:.1f} ms"
+    avg_rtt,
+    color="green",
+    ls="--",
+    lw=1.8,
+    alpha=0.9,
+    label=f"Avg = {avg_rtt:.2f} ms",
+)
+plt.axhline(
+    p90,
+    color="#1db986",
+    ls="--",
+    lw=1.8,
+    alpha=0.9,
+    label=f"P90 = {p90:.2f} ms",
 )
 plt.axhline(
     p95,
@@ -143,7 +157,7 @@ plt.axhline(
     ls="--",
     lw=1.8,
     alpha=0.7,
-    label=f"P95 = {p95:.1f} ms",
+    label=f"P95 = {p95:.2f} ms",
 )
 plt.axhline(
     p99,
@@ -151,7 +165,7 @@ plt.axhline(
     ls="--",
     lw=1.8,
     alpha=0.7,
-    label=f"P99 = {p99:.1f} ms",
+    label=f"P99 = {p99:.2f} ms",
 )
 plt.axhline(
     threshold,
@@ -159,7 +173,7 @@ plt.axhline(
     ls="--",
     lw=1.8,
     alpha=0.4,
-    label=f"Spike = {threshold:.1f} ms ({spike_rate:.2f}%)",
+    label=f"Spike = {threshold:.2f} ms ({spike_rate:.2f}%)",
 )
 
 # log-scale
