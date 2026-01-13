@@ -135,46 +135,28 @@ plt.scatter(
     label="RTT per request",
 )
 
-plt.axhline(
-    avg_rtt,
-    color="green",
-    ls="--",
-    lw=1.8,
-    alpha=0.9,
-    label=f"Avg = {avg_rtt:.2f} ms",
-)
-plt.axhline(
-    p90,
-    color="#1db986",
-    ls="--",
-    lw=1.8,
-    alpha=0.9,
-    label=f"P90 = {p90:.2f} ms",
-)
-plt.axhline(
-    p95,
-    color="#1db986",
-    ls="--",
-    lw=1.8,
-    alpha=0.7,
-    label=f"P95 = {p95:.2f} ms",
-)
-plt.axhline(
-    p99,
-    color="#2af0ae",
-    ls="--",
-    lw=1.8,
-    alpha=0.7,
-    label=f"P99 = {p99:.2f} ms",
-)
-plt.axhline(
-    threshold,
-    color="darkorange",
-    ls="--",
-    lw=1.8,
-    alpha=0.4,
-    label=f"Spike = {threshold:.2f} ms ({spike_rate:.2f}%)",
-)
+# ── Statistics lines ───────────────────────────────
+
+reference_lines = [
+    (avg_rtt, "green", 0.9, f"Avg = {avg_rtt:.2f} ms"),
+    (p90, "#1db986", 0.9, f"P90 = {p90:.2f} ms"),
+    (p95, "#1db986", 0.7, f"P95 = {p95:.2f} ms"),
+    (p99, "#2af0ae", 0.7, f"P99 = {p99:.2f} ms"),
+    (threshold, "darkorange", 0.4, f"Spike = {threshold:.2f} ms ({spike_rate:.2f}%)"),
+]
+
+reference_lines.sort(key=lambda x: x[0], reverse=True)  # sort by y-value
+
+for y, color, alpha, label in reference_lines:
+    plt.axhline(
+        y=y,
+        color=color,
+        linestyle="--",
+        linewidth=1.8,
+        alpha=alpha,
+        label=label,
+        zorder=4.5,  # ← often helpful so lines stay above data points
+    )
 
 # log-scale
 plt.gca().set_ylim(bottom=min_rtt - 1, top=max_rtt + 1)
