@@ -138,12 +138,28 @@ plt.axhline(
     avg_rtt, color="green", ls="--", lw=1.8, alpha=0.9, label=f"Avg = {avg_rtt:.1f} ms"
 )
 plt.axhline(
+    p95,
+    color="#1db986",
+    ls="--",
+    lw=1.8,
+    alpha=0.7,
+    label=f"P95 = {p95:.1f} ms",
+)
+plt.axhline(
+    p99,
+    color="#2af0ae",
+    ls="--",
+    lw=1.8,
+    alpha=0.7,
+    label=f"P99 = {p99:.1f} ms",
+)
+plt.axhline(
     threshold,
     color="darkorange",
     ls="--",
     lw=1.8,
     alpha=0.4,
-    label=f"Spike threshold = {threshold:.1f} ms",
+    label=f"Spike = {threshold:.1f} ms ({spike_rate:.2f}%)",
 )
 
 # log-scale
@@ -163,7 +179,5 @@ plt.title(f"HTTPS RTT – {LOG_FILE.split('_')[0]}")
 plt.grid(True, alpha=0.35, ls="--")
 plt.legend(loc="upper right", framealpha=0.92)
 plt.tight_layout()
-
-plt.figtext(0.1, 0.02, f"p95: {p95:.2f}, p99: {p99:.2f} | spike {spike_rate:.2f}%")
 
 plt.show()
