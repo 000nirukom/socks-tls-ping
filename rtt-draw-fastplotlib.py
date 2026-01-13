@@ -1,3 +1,4 @@
+from math import log
 import re
 import argparse
 from datetime import datetime
@@ -61,7 +62,8 @@ threshold = avg_rtt + 3 * std_rtt
 colors = ["r" if rtt >= threshold else "#176f58" for rtt in rtt_values]
 
 xs = rtt_tsdiff
-ys = rtt_values
+log_base = 1.001
+ys = [log(rtt, log_base) for rtt in rtt_values]
 
 min_ts = datetime.fromtimestamp(base_ts + xs[0])
 max_ts = datetime.fromtimestamp(base_ts + xs[-1])
@@ -80,6 +82,9 @@ scatter = figure[0, 0].add_scatter(
     edge_width=0,
 )
 
+avg_rtt = log(avg_rtt, log_base)
+threshold = log(threshold, log_base)
+
 figure[0, 0].add_line(
     data=np.array([(xs[0], avg_rtt), (xs[-1], avg_rtt)]),
     colors="g",
@@ -92,7 +97,7 @@ figure[0, 0].add_line(
 formatter = "%d %H:%M" if max_ts.day != min_ts.day else "%H:%M:%S"
 
 
-def tick_format(
+def tick_format_x(
     sec: float,
     _min_sec: float,
     _max_sec: float,
@@ -100,14 +105,24 @@ def tick_format(
     return datetime.fromtimestamp(base_ts + sec).strftime(formatter)
 
 
-figure[0, 0].axes.x.tick_side = "right"
-figure[0, 0].axes.x.tick_format = tick_format
+min_rtt_log2 = min(ys)
+max_rtt_log2 = max(ys)
+
+
+def tick_format_y(rtt: float, _min, _max) -> str:
+    if rtt > max_rtt_log2 or rtt < min_rtt_log2:
+        return "--"
+    return f"{log_base**rtt:.2f}ms"
+
+
+figure[0, 0].axes.x.tick_format = tick_format_x
+figure[0, 0].axes.y.tick_format = tick_format_y
 
 is_moving = False
 vertex_index = None
 
-# todo: tooltip x/y value display
-figure.show_tooltips = True
+# todo: fix tooltip x/y value display
+figure.show_tooltips = False
 figure.show()
 
 
