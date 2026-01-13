@@ -10,13 +10,10 @@ import fastplotlib as fpl
 
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="Path to the log file")
-parser.add_argument("--webgl", action="store_true", help="Accelerate with WebGL")
 args = parser.parse_args()
 
 LOG_FILE = Path(args.logfile)
 log_name = LOG_FILE.stem.split("_")[0]
-
-ENABLE_WEBGL = args.webgl
 
 rtt_list: list[tuple[datetime, float]] = []
 pattern = re.compile(r"请求 #(\d+) 成功 \| RTT: ([\d.]+)ms")
