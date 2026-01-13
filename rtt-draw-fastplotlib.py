@@ -10,7 +10,20 @@ import fastplotlib as fpl
 
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="Path to the log file")
+parser.add_argument("--pixel-font", action="store_true", help="Use fusion pixel font")
 args = parser.parse_args()
+
+# TODO: also set font for imgui
+if args.pixel_font:
+    from pygfx.utils.text import font_manager, FontProps
+
+    font = font_manager.add_font_file(
+        "fonts/fusion-pixel-12px-proportional-zh_hans.ttf"
+    )
+    font_manager._default_font_props = FontProps(
+        font.family, style="normal", weight="regular"
+    )
+
 
 LOG_FILE = Path(args.logfile)
 log_name = LOG_FILE.stem.split("_")[0]
