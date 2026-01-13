@@ -49,6 +49,9 @@ rtt_dt = [dt for dt, _ in rtt_list]
 base_ts = rtt_dt[0].timestamp()
 rtt_tsdiff: list[float] = [dt.timestamp() - base_ts for dt in rtt_dt]
 
+min_tsdiff = rtt_tsdiff[0]
+max_tsdiff = rtt_tsdiff[-1]
+
 rtt_values = [rtt for _, rtt in rtt_list]
 
 avg_rtt = statistics.mean(rtt_values)
@@ -61,11 +64,10 @@ threshold = avg_rtt + 3 * std_rtt
 colors = ["r" if rtt >= threshold else "#176f58" for rtt in rtt_values]
 
 xs = rtt_tsdiff
+# manual log-scale transformation for y values
 log_base = 1.001
 ys = [log(rtt, log_base) for rtt in rtt_values]
 
-min_ts = datetime.fromtimestamp(base_ts + xs[0])
-max_ts = datetime.fromtimestamp(base_ts + xs[-1])
 
 data = np.column_stack([xs, ys])
 
@@ -81,6 +83,7 @@ scatter = figure[0, 0].add_scatter(
     edge_width=0,
 )
 
+# manual log-scale transformation for line values
 avg_rtt = log(avg_rtt, log_base)
 threshold = log(threshold, log_base)
 
@@ -93,7 +96,9 @@ figure[0, 0].add_line(
     colors="y",
 )
 
-formatter = "%d %H:%M" if max_ts.day != min_ts.day else "%H:%M:%S"
+min_dt = rtt_dt[0]
+max_dt = rtt_dt[-1]
+formatter = "%d %H:%M" if max_dt.day != min_dt.day else "%H:%M:%S"
 
 
 def tick_format_x(
@@ -101,15 +106,19 @@ def tick_format_x(
     _min_sec: float,
     _max_sec: float,
 ) -> str:
+    if not (min_tsdiff <= sec <= max_tsdiff):
+        return "--"
+    # workaround for date-time x tick labels
     return datetime.fromtimestamp(base_ts + sec).strftime(formatter)
 
 
-min_rtt_log2 = min(ys)
-max_rtt_log2 = max(ys)
+min_rtt_log = min(ys)
+max_rtt_log = max(ys)
 
 
 def tick_format_y(rtt: float, _min, _max) -> str:
-    if rtt > max_rtt_log2 or rtt < min_rtt_log2:
+    # avoid too large number calculation
+    if rtt > max_rtt_log:
         return "--"
     return f"{log_base**rtt:.2f}ms"
 
@@ -117,6 +126,7 @@ def tick_format_y(rtt: float, _min, _max) -> str:
 figure[0, 0].axes.x.tick_format = tick_format_x
 figure[0, 0].axes.y.tick_format = tick_format_y
 
+# disable maintain_aspect
 figure[0, 0].camera.maintain_aspect = False
 
 
@@ -130,8 +140,8 @@ def tooltip_info(ev) -> str:
 {date_time.strftime("%H:%M:%S")}"""
 
 
+# Custom tooltips for scatter chart
 figure.tooltip_manager.register(scatter, custom_info=tooltip_info)
-
 figure.show()
 
 
