@@ -27,11 +27,20 @@ We have different image draw backend,
 |               | matplotlib | pyecharts | fastplotlib |
 | ------------: | :--------: | :-------: | :---------: |
 |   Performance |  Not bad   |  Garbage  |    Best     |
-| Interactivity |    Good    |   Good    |   Usable    |
+| Interactivity |    Good    |   Best    |   Usable    |
 | informativity |    Best    |  Not bad  |     WIP     |
 
 For the interactivity, matplotlib provides tooltip with focused region view,
-while pyecharts provides sliding time range selector.
+while pyecharts also provides sliding time range selector.
 
-### Screenshots
+### Matplotlib
 
+<img width="1400" height="734" alt="image" src="https://github.com/user-attachments/assets/800c5ad5-2775-4b00-aa69-9171c010ad54" />
+
+### Pyecharts
+
+<img width="1209" height="614" alt="image" src="https://github.com/user-attachments/assets/61183c75-b793-4d8a-b4f3-da5c3f7d009c" />
+
+### Fastplotlib
+
+<img width="1920" height="1009" alt="image" src="https://github.com/user-attachments/assets/6965ae38-9260-4e17-89b4-a7264396f057" />
