@@ -1,3 +1,4 @@
+import os
 from math import log
 import re
 import argparse
@@ -7,25 +8,30 @@ import statistics
 
 import numpy as np
 import fastplotlib as fpl
+from pygfx.utils.text import font_manager as gfx_font_manager, FontProps
 
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="Path to the log file")
 parser.add_argument(
-    "--pixel-font", action="store_true", help="Use fusion pixel font for gfx canvas"
+    "--pixel-font",
+    action="store_true",
+    help="Force use fusion pixel font for canvas and imgui",
 )
 args = parser.parse_args()
 
 font_path = str(Path("fonts") / "fusion-pixel-12px-proportional-zh_hans.ttf")
 
-if args.pixel_font:
-    from pygfx.utils.text import font_manager, FontProps
+if not args.pixel_font:
+    match os.name:
+        case "nt":
+            font_path = f"{os.getenv('SystemDrive') or 'C:'}/Windows/Fonts/msyh.ttc"
 
-    font = font_manager.add_font_file(font_file=font_path)
-    font_manager._default_font_props = FontProps(
-        font.family,
-        style="normal",
-        weight="regular",
-    )
+gfx_font = gfx_font_manager.add_font_file(font_file=font_path)
+gfx_font_manager._default_font_props = FontProps(
+    gfx_font.family,
+    style="normal",
+    weight="regular",
+)
 
 LOG_FILE = Path(args.logfile)
 log_name = "_".join(LOG_FILE.stem.split("_")[:-2])
@@ -88,7 +94,7 @@ data = np.column_stack([xs, ys]).astype(np.float32)
 figure = fpl.Figure(
     size=(700, 560),
     names=[log_name],
-    custom_fonts=[(font_path, 12)],
+    custom_fonts=[(font_path, 14)],
     override_default_font=True,
 )
 

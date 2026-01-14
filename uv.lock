@@ -151,7 +151,7 @@ wheels = [
 [[package]]
 name = "fastplotlib"
 version = "0.6.1"
-source = { git = "https://github.com/MeowKatee/fastplotlib.git#359770a4c79d680ea486a2433612f02b8b3b7b85" }
+source = { git = "https://github.com/MeowKatee/fastplotlib.git?rev=feat%2Fimgui-custom-font#087f1a4f5c1f5671446376042cef6f00e0c829f4" }
 dependencies = [
     { name = "cmap" },
     { name = "numpy" },
@@ -830,7 +830,7 @@ wheels = [
 [[package]]
 name = "socks-tls-ping"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "httpx", extra = ["http2", "socks"] },
 ]
@@ -851,7 +851,7 @@ pyecharts = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastplotlib", extras = ["imgui"], marker = "extra == 'fastplotlib'", git = "https://github.com/MeowKatee/fastplotlib.git" },
+    { name = "fastplotlib", extras = ["imgui"], marker = "extra == 'fastplotlib'", git = "https://github.com/MeowKatee/fastplotlib.git?rev=feat%2Fimgui-custom-font" },
     { name = "glfw", marker = "extra == 'fastplotlib'", specifier = ">=2.10.0" },
     { name = "httpx", extras = ["http2", "socks"], specifier = ">=0.28.1" },
     { name = "matplotlib", marker = "extra == 'matplotlib'", specifier = ">=3.10.8" },
