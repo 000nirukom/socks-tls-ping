@@ -11,7 +11,7 @@ matplotlib = ["matplotlib>=3.10.8", "pyside6>=6.10.1"]
 pyecharts = ["pyecharts>=2.0.9"]
 fastplotlib = [
     "fastplotlib[imgui] @ git+https://github.com/MeowKatee/fastplotlib.git@feat/imgui-custom-font",
-    "glfw>=2.10.0",
+    "pyside6>=6.10.1",
     "numpy<2.4",
 ]
 
