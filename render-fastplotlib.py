@@ -1,6 +1,5 @@
 from math import log
 import re
-import inspect
 import argparse
 from datetime import datetime
 from pathlib import Path
@@ -86,17 +85,12 @@ ys = [log(rtt, log_base) for rtt in rtt_values]
 
 data = np.column_stack([xs, ys]).astype(np.float32)
 
-font_args = {}
-# optional:
-# git clone -b feat/imgui-custom-font https://github.com/MeowKatee/fastplotlib.git fastplotlib
-# uv pip install -e ./fastplotlib
-if "custom_fonts" in inspect.signature(fpl.Figure.__init__).parameters:
-    font_args = {
-        "custom_fonts": [(font_path, 12)],
-        "override_default_font": True,
-    }
-
-figure = fpl.Figure(size=(700, 560), names=[log_name], **font_args)
+figure = fpl.Figure(
+    size=(700, 560),
+    names=[log_name],
+    custom_fonts=[(font_path, 12)],
+    override_default_font=True,
+)
 
 # add a scatter
 scatter = figure[0, 0].add_scatter(
