@@ -152,11 +152,13 @@ figure[0, 0].camera.maintain_aspect = False
 
 line_avg = figure[0, 0].add_line(
     data=np.array([(xs[0], avg_rtt_log), (xs[-1], avg_rtt_log)], dtype=np.float32),
-    colors="g",
+    colors="#4caf50c0",
+    thickness=2,
 )
 line_thr = figure[0, 0].add_line(
     data=np.array([(xs[0], threshold_log), (xs[-1], threshold_log)], dtype=np.float32),
-    colors="y",
+    colors="#ff9100c0",
+    thickness=2,
 )
 
 
