@@ -13,9 +13,7 @@ fastplotlib = [
     "fastplotlib[imgui] @ git+https://github.com/MeowKatee/fastplotlib.git@feat/imgui-custom-font",
     "pyside6>=6.10.1",
     "numpy<2.4",
-]
-unix-font = [
-    "fontconfig-py>=1.0.1",
+    "fontconfig-py>=1.0.1; sys_platform!='win32'",
 ]
 
 [tool.uv]

@@ -834,6 +834,7 @@ dependencies = [
 [package.optional-dependencies]
 fastplotlib = [
     { name = "fastplotlib", extra = ["imgui"] },
+    { name = "fontconfig-py", marker = "sys_platform != 'win32'" },
     { name = "numpy" },
     { name = "pyside6" },
 ]
@@ -844,14 +845,11 @@ matplotlib = [
 pyecharts = [
     { name = "pyecharts" },
 ]
-unix-font = [
-    { name = "fontconfig-py" },
-]
 
 [package.metadata]
 requires-dist = [
     { name = "fastplotlib", extras = ["imgui"], marker = "extra == 'fastplotlib'", git = "https://github.com/MeowKatee/fastplotlib.git?rev=feat%2Fimgui-custom-font" },
-    { name = "fontconfig-py", marker = "extra == 'unix-font'", specifier = ">=1.0.1" },
+    { name = "fontconfig-py", marker = "sys_platform != 'win32' and extra == 'fastplotlib'", specifier = ">=1.0.1" },
     { name = "httpx", extras = ["http2", "socks"], specifier = ">=0.28.1" },
     { name = "matplotlib", marker = "extra == 'matplotlib'", specifier = ">=3.10.8" },
     { name = "numpy", marker = "extra == 'fastplotlib'", specifier = "<2.4" },
@@ -859,7 +857,7 @@ requires-dist = [
     { name = "pyside6", marker = "extra == 'fastplotlib'", specifier = ">=6.10.1" },
     { name = "pyside6", marker = "extra == 'matplotlib'", specifier = ">=6.10.1" },
 ]
-provides-extras = ["matplotlib", "pyecharts", "fastplotlib", "unix-font"]
+provides-extras = ["matplotlib", "pyecharts", "fastplotlib"]
 
 [[package]]
 name = "socksio"

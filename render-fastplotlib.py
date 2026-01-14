@@ -8,6 +8,7 @@ import statistics
 
 import numpy as np
 import fastplotlib as fpl
+import pygfx
 from pygfx.utils.text import font_manager as gfx_font_manager, FontProps
 
 parser = argparse.ArgumentParser()
@@ -26,16 +27,11 @@ if not args.pixel_font:
         case "nt":
             font_path = f"{os.getenv('SystemDrive') or 'C:'}/Windows/Fonts/msyh.ttc"
         case "posix":
-            try:
-                import fontconfig
+            import fontconfig
 
-                font_match = fontconfig.match(
-                    f":charset={f'{ord("中")}'}:weight=Regular"
-                )
-                if font_match is not None:
-                    font_path = font_match["file"]
-            except ImportError:
-                print("Warning: fontconfig module not found, using default pixel font.")
+            font_match = fontconfig.match(f":charset={f'{ord("中")}'}:weight=Regular")
+            if font_match is not None:
+                font_path = font_match["file"]
 
 gfx_font = gfx_font_manager.add_font_file(font_file=font_path)
 gfx_font_manager._default_font_props = FontProps(
@@ -164,7 +160,7 @@ line_thr = figure[0, 0].add_line(
 )
 
 
-def tooltip_info(ev) -> str:
+def tooltip_info(ev: pygfx.PointerEvent) -> str:
     # get index of the scatter point that is being hovered
     index: int = ev.pick_info["vertex_index"]
     date_time = rtt_dt[index]
