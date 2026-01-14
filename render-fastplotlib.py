@@ -272,20 +272,19 @@ figure.add_gui(
 )
 
 
-# add a scatter chart for distribution
-if show_distribution:
+def draw_distribution():
     distribution_precision: int = args.distribution_precision
     dist_idx = 0, 0
 
     # filter out 0.5% extreme values for better distribution display
     factor: float = 99.5
     pfactor = np.percentile(rtt_values, factor)
-    rtt_values = rtt_values[(rtt_values <= pfactor)]
+    filtered_rtts = rtt_values[(rtt_values <= pfactor)]
 
     # calculate bin number using filtered
-    bin = distribution_precision * int((rtt_values.max() - rtt_values.min())) + 1
+    bin = distribution_precision * int((filtered_rtts.max() - filtered_rtts.min())) + 1
     # 统计每个区间的数量
-    hist, bin_edges = np.histogram(rtt_values, bins=bin)
+    hist, bin_edges = np.histogram(filtered_rtts, bins=bin)
     hist = hist / hist.max() * 100  # normalize to 100 for better display
 
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
@@ -376,6 +375,10 @@ if show_distribution:
         custom_info=lambda _: f"P99: {p99:.2f}ms",
     )
 
+
+# add a scatter chart for distribution
+if show_distribution:
+    draw_distribution()
 
 figure.show()
 
