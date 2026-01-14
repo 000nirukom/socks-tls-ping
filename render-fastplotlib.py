@@ -87,7 +87,9 @@ ys = [log(rtt, log_base) for rtt in rtt_values]
 data = np.column_stack([xs, ys]).astype(np.float32)
 
 font_args = {}
-# optional: install https://github.com/MeowKatee/fastplotlib.git#branch=feat/imgui-custom-font
+# optional:
+# git clone -b feat/imgui-custom-font https://github.com/MeowKatee/fastplotlib.git fastplotlib
+# uv pip install -e ./fastplotlib
 if "custom_fonts" in inspect.signature(fpl.Figure.__init__).parameters:
     font_args = {
         "custom_fonts": [(font_path, 12)],
