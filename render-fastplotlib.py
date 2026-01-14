@@ -100,7 +100,8 @@ data = np.column_stack([xs, ys]).astype(np.float32)
 
 figure = fpl.Figure(
     size=(700, 560),
-    names=[log_name],
+    shape=(2, 1),
+    names=[log_name, "distribution"],
     custom_fonts=[(font_path, 14)],
     override_default_font=True,
 )
@@ -110,6 +111,40 @@ scatter = figure[0, 0].add_scatter(
     data=data,
     sizes=5,
     colors=colors,
+    edge_width=0,
+)
+
+
+# add a scatter chart for distribution
+rtt_values = np.array(rtt_values, dtype=float)
+
+p90 = np.percentile(rtt_values, 90)
+p95 = np.percentile(rtt_values, 95)
+p98 = np.percentile(rtt_values, 98)
+p99 = np.percentile(rtt_values, 99)
+
+
+# filter out 0.5% extreme values for better distribution display
+factor: float = 99.5
+pfactor = np.percentile(rtt_values, factor)
+rtt_values = rtt_values[(rtt_values <= pfactor)]
+
+# calculate bin number using filtered
+bin = 2 * int((rtt_values.max() - rtt_values.min())) + 1
+# 统计每个区间的数量
+hist, bin_edges = np.histogram(rtt_values, bins=bin)
+hist = hist / hist.max() * 100  # normalize to 100 for better display
+
+bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+distribution = figure[1, 0].add_scatter(
+    data=np.column_stack(
+        [
+            bin_centers,
+            hist,
+        ]
+    ).astype(np.float32),
+    sizes=5,
+    colors="#2196f3",
     edge_width=0,
 )
 
@@ -149,6 +184,7 @@ figure[0, 0].axes.y.tick_format = tick_format_y
 
 # disable maintain_aspect
 figure[0, 0].camera.maintain_aspect = False
+figure[1, 0].camera.maintain_aspect = False
 
 line_avg = figure[0, 0].add_line(
     data=np.array([(xs[0], avg_rtt_log), (xs[-1], avg_rtt_log)], dtype=np.float32),
@@ -158,6 +194,51 @@ line_avg = figure[0, 0].add_line(
 line_thr = figure[0, 0].add_line(
     data=np.array([(xs[0], threshold_log), (xs[-1], threshold_log)], dtype=np.float32),
     colors="#ff9100c0",
+    thickness=2,
+)
+
+line_p90 = figure[1, 0].add_line(
+    data=np.array(
+        [
+            (p90, 0),
+            (p90, hist.max()),
+        ],
+        dtype=np.float32,
+    ),
+    colors="#ff5722c0",
+    thickness=2,
+)
+line_p95 = figure[1, 0].add_line(
+    data=np.array(
+        [
+            (p95, 0),
+            (p95, hist.max()),
+        ],
+        dtype=np.float32,
+    ),
+    colors="#e91e63c0",
+    thickness=2,
+)
+line_p98 = figure[1, 0].add_line(
+    data=np.array(
+        [
+            (p98, 0),
+            (p98, hist.max()),
+        ],
+        dtype=np.float32,
+    ),
+    colors="#9c27b0c0",
+    thickness=2,
+)
+line_p99 = figure[1, 0].add_line(
+    data=np.array(
+        [
+            (p99, 0),
+            (p99, hist.max()),
+        ],
+        dtype=np.float32,
+    ),
+    colors="#673ab7c0",
     thickness=2,
 )
 
@@ -172,11 +253,39 @@ def tooltip_info(ev: pygfx.PointerEvent) -> str:
 {date_time.strftime("%H:%M:%S")}"""
 
 
+def tooltip_dist_info(ev: pygfx.PointerEvent) -> str:
+    index: int = ev.pick_info["vertex_index"]
+    rtt = bin_centers[index]
+
+    return f"""RTT: {rtt:.2f}ms"""
+
+
 # Custom tooltips
 figure.tooltip_manager.register(scatter, custom_info=tooltip_info)
 figure.tooltip_manager.register(line_avg, custom_info=lambda _: f"Avg: {avg_rtt:.2f}ms")
 figure.tooltip_manager.register(
     line_thr, custom_info=lambda _: f"THR: {threshold:.2f}ms\nspike {spike_rate:.2f}%"
+)
+
+figure.tooltip_manager.register(
+    distribution,
+    custom_info=tooltip_dist_info,
+)
+figure.tooltip_manager.register(
+    line_p90,
+    custom_info=lambda _: f"P90: {p90:.2f}ms",
+)
+figure.tooltip_manager.register(
+    line_p95,
+    custom_info=lambda _: f"P95: {p95:.2f}ms",
+)
+figure.tooltip_manager.register(
+    line_p98,
+    custom_info=lambda _: f"P98: {p98:.2f}ms",
+)
+figure.tooltip_manager.register(
+    line_p99,
+    custom_info=lambda _: f"P99: {p99:.2f}ms",
 )
 
 figure.show()

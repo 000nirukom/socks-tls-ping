@@ -79,7 +79,6 @@ if not rtt_list:
 rtt_list.sort(key=lambda x: x[0])
 
 rtt_values = [rtt for _, rtt, _ in rtt_list]
-req_numbers = [num for _, _, num in rtt_list]
 
 # ────────────────────────────────────────────────
 #  Basic statistics
