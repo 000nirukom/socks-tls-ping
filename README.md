@@ -34,7 +34,7 @@ We have different image draw backend,
 | ------------: | :--------: | :-------: | :-----------------------------: |
 |   Performance |  Not bad   |  Garbage  |              Best               |
 | Interactivity |    Good    |   Best    | Pretty good<br>Smooth rendering |
-| Informativity |    Best    |  Not bad  |             Not bad             |
+| Informativity |    Best    |  Not bad  |     Customizable with imgui     |
 
 For the interactivity, matplotlib provides tooltip with focused region view,
 while pyecharts also provides sliding time range selector.

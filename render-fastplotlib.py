@@ -10,6 +10,9 @@ import numpy as np
 import fastplotlib as fpl
 import pygfx
 from pygfx.utils.text import font_manager as gfx_font_manager, FontProps
+from fastplotlib.layouts import ImguiFigure
+from fastplotlib.ui import EdgeWindow
+from imgui_bundle import imgui
 
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="Path to the log file")
@@ -111,7 +114,7 @@ ys = [log(rtt, log_base) for rtt in rtt_values]
 
 data = np.column_stack([xs, ys]).astype(np.float32)
 
-figure = fpl.Figure(
+figure: ImguiFigure = fpl.Figure(
     size=(700, 560),
     shape=(2, 1) if show_distribution else (1, 1),
     names=["RTT Distribution", log_name] if show_distribution else [log_name],
@@ -167,15 +170,17 @@ figure[scatter_idx].axes.y.tick_format = tick_format_y
 # disable maintain_aspect
 figure[scatter_idx].camera.maintain_aspect = False
 
+avg_color = "#4caf50c0"
+thr_color = "#fcff33c0"
 
 line_avg = figure[scatter_idx].add_line(
     data=np.array([(xs[0], avg_rtt_log), (xs[-1], avg_rtt_log)], dtype=np.float32),
-    colors="#4caf50c0",
+    colors=avg_color,
     thickness=2,
 )
 line_thr = figure[scatter_idx].add_line(
     data=np.array([(xs[0], threshold_log), (xs[-1], threshold_log)], dtype=np.float32),
-    colors="#ff9100c0",
+    colors=thr_color,
     thickness=2,
 )
 
@@ -197,16 +202,80 @@ figure.tooltip_manager.register(
     line_thr, custom_info=lambda _: f"THR: {threshold:.2f}ms\nspike {spike_rate:.2f}%"
 )
 
+rtt_values = np.array(rtt_values, dtype=float)
+
+p90 = np.percentile(rtt_values, 90)
+p95 = np.percentile(rtt_values, 95)
+p98 = np.percentile(rtt_values, 98)
+p99 = np.percentile(rtt_values, 99)
+
+p90_color = "#ff5722c0"
+p95_color = "#e91e63c0"
+p98_color = "#9c27b0c0"
+p99_color = "#673ab7c0"
+
+
+class RTTInfo(EdgeWindow):
+    @staticmethod
+    def _colorhex_to_rgba(color_hex: str) -> tuple[float, float, float, float]:
+        color_hex = color_hex.strip("#")
+        if len(color_hex) == 6:
+            color_hex += "FF"
+        return tuple(
+            int(color_hex[i : i + 2], base=16) / 255.0
+            for i in range(0, len(color_hex), 2)
+        )
+
+    def update(self):
+        # Your ImGui calls go here
+        imgui.begin("RTT")
+
+        imgui.text_colored(
+            self._colorhex_to_rgba(avg_color),
+            f"Avg: {avg_rtt:.2f}ms",
+        )
+
+        imgui.text_colored(
+            self._colorhex_to_rgba(thr_color),
+            f"Avg+3σ: {threshold:.2f}ms",
+        )
+
+        if show_distribution:
+            imgui.text_colored(
+                self._colorhex_to_rgba(p90_color),
+                f"P90: {p90:.2f}ms",
+            )
+            imgui.text_colored(
+                self._colorhex_to_rgba(p95_color),
+                f"P95: {p95:.2f}ms",
+            )
+            imgui.text_colored(
+                self._colorhex_to_rgba(p98_color),
+                f"P98: {p98:.2f}ms",
+            )
+            imgui.text_colored(
+                self._colorhex_to_rgba(p99_color),
+                f"P99: {p99:.2f}ms",
+            )
+
+        imgui.end()
+
+
+figure.add_gui(
+    RTTInfo(
+        figure=figure,
+        size=0,
+        location="right",
+        title="_",
+        window_flags=imgui.WindowFlags_.always_auto_resize,
+    )
+)
+
+
 # add a scatter chart for distribution
 if show_distribution:
     distribution_precision: int = args.distribution_precision
-    rtt_values = np.array(rtt_values, dtype=float)
     dist_idx = 0, 0
-
-    p90 = np.percentile(rtt_values, 90)
-    p95 = np.percentile(rtt_values, 95)
-    p98 = np.percentile(rtt_values, 98)
-    p99 = np.percentile(rtt_values, 99)
 
     # filter out 0.5% extreme values for better distribution display
     factor: float = 99.5
@@ -243,7 +312,7 @@ if show_distribution:
             ],
             dtype=np.float32,
         ),
-        colors="#ff5722c0",
+        colors=p90_color,
         thickness=2,
     )
     line_p95 = figure[dist_idx].add_line(
@@ -254,7 +323,7 @@ if show_distribution:
             ],
             dtype=np.float32,
         ),
-        colors="#e91e63c0",
+        colors=p95_color,
         thickness=2,
     )
     line_p98 = figure[dist_idx].add_line(
@@ -265,7 +334,7 @@ if show_distribution:
             ],
             dtype=np.float32,
         ),
-        colors="#9c27b0c0",
+        colors=p98_color,
         thickness=2,
     )
     line_p99 = figure[dist_idx].add_line(
@@ -276,7 +345,7 @@ if show_distribution:
             ],
             dtype=np.float32,
         ),
-        colors="#673ab7c0",
+        colors=p99_color,
         thickness=2,
     )
 
