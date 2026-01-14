@@ -20,6 +20,12 @@ Typical use cases:
 * Observe jitter, tail latency and instability over time
 * Verify whether a proxy or chain is suitable for latency-sensitive traffic
 
+## Usage
+
+```bash
+uv run socks-tls-ping [SOCKS5_PORT] [LOG_PREFIX]
+```
+
 ## Draw chart
 
 We have different image draw backend,

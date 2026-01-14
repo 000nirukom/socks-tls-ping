@@ -1,6 +1,10 @@
 version = 1
 revision = 3
 requires-python = ">=3.13"
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version < '3.14'",
+]
 
 [[package]]
 name = "anyio"
@@ -851,7 +855,7 @@ pyecharts = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastplotlib", extras = ["imgui"], marker = "extra == 'fastplotlib'", specifier = ">=0.6.1" },
+    { name = "fastplotlib", extras = ["imgui"], marker = "extra == 'fastplotlib'" },
     { name = "glfw", marker = "extra == 'fastplotlib'", specifier = ">=2.10.0" },
     { name = "httpx", extras = ["http2", "socks"], specifier = ">=0.28.1" },
     { name = "matplotlib", marker = "extra == 'matplotlib'", specifier = ">=3.10.8" },

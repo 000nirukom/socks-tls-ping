@@ -1,5 +1,6 @@
 from math import log
 import re
+import inspect
 import argparse
 from datetime import datetime
 from pathlib import Path
@@ -10,16 +11,17 @@ import fastplotlib as fpl
 
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="Path to the log file")
-parser.add_argument("--pixel-font", action="store_true", help="Use fusion pixel font")
+parser.add_argument(
+    "--pixel-font", action="store_true", help="Use fusion pixel font for gfx canvas"
+)
 args = parser.parse_args()
 
-# TODO: also set font for imgui
+font_path = str(Path("fonts") / "fusion-pixel-12px-proportional-zh_hans.ttf")
+
 if args.pixel_font:
     from pygfx.utils.text import font_manager, FontProps
 
-    font = font_manager.add_font_file(
-        "fonts/fusion-pixel-12px-proportional-zh_hans.ttf"
-    )
+    font = font_manager.add_font_file(font_file=font_path)
     font_manager._default_font_props = FontProps(
         font.family,
         style="normal",
@@ -84,10 +86,15 @@ ys = [log(rtt, log_base) for rtt in rtt_values]
 
 data = np.column_stack([xs, ys]).astype(np.float32)
 
-figure = fpl.Figure(
-    size=(700, 560),
-    names=[log_name],
-)
+font_args = {}
+# optional: install https://github.com/MeowKatee/fastplotlib.git#branch=feat/imgui-custom-font
+if "custom_fonts" in inspect.signature(fpl.Figure.__init__).parameters:
+    font_args = {
+        "custom_fonts": [(font_path, 12)],
+        "override_default_font": True,
+    }
+
+figure = fpl.Figure(size=(700, 560), names=[log_name], **font_args)
 
 # add a scatter
 scatter = figure[0, 0].add_scatter(

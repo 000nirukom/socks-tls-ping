@@ -287,9 +287,13 @@ async def main():
         logger.info("=" * 70)
 
 
-if __name__ == "__main__":
+def _main():
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\n程序已通过外部 KeyboardInterrupt 退出")
         logger.info("程序通过外部 KeyboardInterrupt 退出")
+
+
+if __name__ == "__main__":
+    _main()
