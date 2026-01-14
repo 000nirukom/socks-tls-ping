@@ -20,24 +20,39 @@ Typical use cases:
 * Observe jitter, tail latency and instability over time
 * Verify whether a proxy or chain is suitable for latency-sensitive traffic
 
+## Installation
+
+```bash
+uv sync # only for network requests
+
+# matplotlib, fastplotlib, pyecharts
+uv sync --extra [plot_backend] # plot chart for quick analysis
+```
+
+[fpl-rectangle-selector]: https://www.fastplotlib.org/ver/dev/_gallery/selection_tools/rectangle_selector.html
+
+|                     | matplotlib | pyecharts |                fastplotlib                |
+| ------------------: | :--------: | :-------: | :---------------------------------------: |
+|       Ranged slider |     --     |    Yes    |                    --                     |
+| Rectangle selection |    Yes     |    Yes    | [Partial support][fpl-rectangle-selector] |
+|            Tooltips |     --     |    Yes    |                    Yes                    |
+|         Drag to pan |    Slow    |    --     |                   Great                   |
+|         Export HTML |     --     |    Yes    |                    --                     |
+|        Export image |    Yes     |    Yes    |                    --                     |
+
+### Render performance
+
+The performance of matplotlib depends on the use case. It is relatively slower than pyecharts when plotting a subregion, but can be faster when rendering the full dataset.
+
+For pyecharts, performance is more consistent with large datasets, particularly when interacting with subregions of the data.
+
+In any case, fastplotlib can render plots in real time, making it the best choice for interactive use, whether working with the full chart or a subregion.
+
 ## Usage
 
 ```bash
 uv run socks-tls-ping [SOCKS5_PORT] [LOG_PREFIX]
 ```
-
-## Draw chart
-
-We have different image draw backend,
-
-|               | matplotlib | pyecharts |           fastplotlib           |
-| ------------: | :--------: | :-------: | :-----------------------------: |
-|   Performance |  Not bad   |  Garbage  |              Best               |
-| Interactivity |    Good    |   Best    | Pretty good<br>Smooth rendering |
-| Informativity |    Best    |  Not bad  |     Customizable with imgui     |
-
-For the interactivity, matplotlib provides tooltip with focused region view,
-while pyecharts also provides sliding time range selector.
 
 ### Matplotlib
 
@@ -49,5 +64,11 @@ while pyecharts also provides sliding time range selector.
 
 ### Fastplotlib
 
-<img width="1920" height="1009" alt="image" src="https://github.com/user-attachments/assets/26593247-bf37-494b-abb3-abcf54e1a340" />
+> For fastplotlib, the interaction model is similar to matplotlib:
+>
+> * Left-click and drag to pan the view.
+> * Right-click and drag to scale along the x or y axis.
+> * Use the mouse wheel to zoom while preserving the current aspect ratio.
+
+<img width="1918" height="968" alt="image" src="https://github.com/user-attachments/assets/a5657d77-219f-422a-938f-9708c0e6d128" />
 
