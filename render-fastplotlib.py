@@ -25,6 +25,17 @@ if not args.pixel_font:
     match os.name:
         case "nt":
             font_path = f"{os.getenv('SystemDrive') or 'C:'}/Windows/Fonts/msyh.ttc"
+        case "posix":
+            try:
+                import fontconfig
+
+                font_match = fontconfig.match(
+                    f":charset={f'{ord("中")}'}:weight=Regular"
+                )
+                if font_match is not None:
+                    font_path = font_match["file"]
+            except ImportError:
+                print("Warning: fontconfig module not found, using default pixel font.")
 
 gfx_font = gfx_font_manager.add_font_file(font_file=font_path)
 gfx_font_manager._default_font_props = FontProps(
