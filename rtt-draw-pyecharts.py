@@ -14,7 +14,7 @@ parser.add_argument("--webgl", action="store_true", help="Accelerate with WebGL"
 args = parser.parse_args()
 
 LOG_FILE = Path(args.logfile)
-log_name = LOG_FILE.stem.split("_")[0]
+log_name = "_".join(LOG_FILE.stem.split("_")[:-2])
 
 ENABLE_WEBGL = args.webgl
 

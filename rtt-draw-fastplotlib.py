@@ -10,9 +10,7 @@ import fastplotlib as fpl
 
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="Path to the log file")
-parser.add_argument("--pixel-font",
-                    action="store_true",
-                    help="Use fusion pixel font")
+parser.add_argument("--pixel-font", action="store_true", help="Use fusion pixel font")
 args = parser.parse_args()
 
 # TODO: also set font for imgui
@@ -20,7 +18,8 @@ if args.pixel_font:
     from pygfx.utils.text import font_manager, FontProps
 
     font = font_manager.add_font_file(
-        "fonts/fusion-pixel-12px-proportional-zh_hans.ttf")
+        "fonts/fusion-pixel-12px-proportional-zh_hans.ttf"
+    )
     font_manager._default_font_props = FontProps(
         font.family,
         style="normal",
@@ -28,7 +27,7 @@ if args.pixel_font:
     )
 
 LOG_FILE = Path(args.logfile)
-log_name = LOG_FILE.stem.split("_")[0]
+log_name = "_".join(LOG_FILE.stem.split("_")[:-2])
 
 rtt_list: list[tuple[datetime, float]] = []
 pattern = re.compile(r"请求 #(\d+) 成功 \| RTT: ([\d.]+)ms")
@@ -49,7 +48,8 @@ with open(LOG_FILE, "r", encoding="utf-8") as f:
 
         try:
             dt = datetime.strptime(
-                dt_str, "%Y-%m-%d %H:%M:%S")  # ← adjust format if needed!
+                dt_str, "%Y-%m-%d %H:%M:%S"
+            )  # ← adjust format if needed!
         except ValueError:
             continue
 
@@ -135,13 +135,11 @@ figure[0, 0].axes.y.tick_format = tick_format_y
 figure[0, 0].camera.maintain_aspect = False
 
 line_avg = figure[0, 0].add_line(
-    data=np.array([(xs[0], avg_rtt_log), (xs[-1], avg_rtt_log)],
-                  dtype=np.float32),
+    data=np.array([(xs[0], avg_rtt_log), (xs[-1], avg_rtt_log)], dtype=np.float32),
     colors="g",
 )
 line_thr = figure[0, 0].add_line(
-    data=np.array([(xs[0], threshold_log), (xs[-1], threshold_log)],
-                  dtype=np.float32),
+    data=np.array([(xs[0], threshold_log), (xs[-1], threshold_log)], dtype=np.float32),
     colors="y",
 )
 
@@ -158,11 +156,10 @@ def tooltip_info(ev) -> str:
 
 # Custom tooltips
 figure.tooltip_manager.register(scatter, custom_info=tooltip_info)
-figure.tooltip_manager.register(line_avg,
-                                custom_info=lambda _: f"Avg: {avg_rtt:.2f}ms")
+figure.tooltip_manager.register(line_avg, custom_info=lambda _: f"Avg: {avg_rtt:.2f}ms")
 figure.tooltip_manager.register(
-    line_thr,
-    custom_info=lambda _: f"THR: {threshold:.2f}ms\nspike {spike_rate:.2f}%")
+    line_thr, custom_info=lambda _: f"THR: {threshold:.2f}ms\nspike {spike_rate:.2f}%"
+)
 
 figure.show()
 

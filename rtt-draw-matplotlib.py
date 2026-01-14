@@ -31,13 +31,13 @@ if FONT_PATH.exists():
 # ────────────────────────────────────────────────
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="Path to the log file")
-parser.add_argument("--no-spike-color",
-                    action="store_true",
-                    help="Don't color spikes differently")
+parser.add_argument(
+    "--no-spike-color", action="store_true", help="Don't color spikes differently"
+)
 args = parser.parse_args()
 
 LOG_FILE = Path(args.logfile)
-log_name = LOG_FILE.stem.split('_')[0]
+log_name = "_".join(LOG_FILE.stem.split("_")[:-2])
 
 # ────────────────────────────────────────────────
 #  Parse log
@@ -61,7 +61,8 @@ with open(LOG_FILE, "r", encoding="utf-8") as f:
 
         try:
             dt = datetime.strptime(
-                dt_str, "%Y-%m-%d %H:%M:%S")  # ← adjust format if needed!
+                dt_str, "%Y-%m-%d %H:%M:%S"
+            )  # ← adjust format if needed!
         except ValueError:
             continue
 
@@ -123,9 +124,7 @@ plt.figure(figsize=(14, 7))
 if args.no_spike_color:
     colors = "royalblue"
 else:
-    colors = [
-        "indianred" if r > threshold else "cornflowerblue" for r in plot_main
-    ]
+    colors = ["indianred" if r > threshold else "cornflowerblue" for r in plot_main]
 
 plt.scatter(
     plot_times,
@@ -144,8 +143,7 @@ reference_lines = [
     (p90, "#1db986", 0.9, f"P90 = {p90:.2f} ms"),
     (p95, "#1db986", 0.7, f"P95 = {p95:.2f} ms"),
     (p99, "#2af0ae", 0.7, f"P99 = {p99:.2f} ms"),
-    (threshold, "darkorange", 0.4,
-     f"Spike = {threshold:.2f} ms ({spike_rate:.2f}%)"),
+    (threshold, "darkorange", 0.4, f"Spike = {threshold:.2f} ms ({spike_rate:.2f}%)"),
 ]
 
 reference_lines.sort(key=lambda x: x[0], reverse=True)  # sort by y-value
@@ -168,8 +166,7 @@ plt.gca().yaxis.set_major_formatter(StrMethodFormatter("{x:.0f}"))
 plt.gca().yaxis.set_minor_formatter(StrMethodFormatter("{x:.0f}"))
 
 # ── Nice date formatting ───────────────────────────────
-plt.gca().xaxis.set_major_formatter(
-    mdates.AutoDateFormatter(mdates.AutoDateLocator()))
+plt.gca().xaxis.set_major_formatter(mdates.AutoDateFormatter(mdates.AutoDateLocator()))
 plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator(maxticks=12))
 plt.xticks(rotation=38, ha="right")
 
