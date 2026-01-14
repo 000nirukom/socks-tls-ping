@@ -43,4 +43,5 @@ while pyecharts also provides sliding time range selector.
 
 ### Fastplotlib
 
-<img width="1920" height="1009" alt="image" src="https://github.com/user-attachments/assets/6965ae38-9260-4e17-89b4-a7264396f057" />
+<img width="1920" height="1009" alt="image" src="https://github.com/user-attachments/assets/26593247-bf37-494b-abb3-abcf54e1a340" />
+
