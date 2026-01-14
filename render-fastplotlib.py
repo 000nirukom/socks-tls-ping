@@ -22,9 +22,9 @@ parser.add_argument(
     help="Force use fusion pixel font for canvas and imgui",
 )
 parser.add_argument(
-    "--show-distribution",
+    "--hide-distribution",
     action="store_true",
-    help="Show RTT distribution subplot",
+    help="Hide RTT distribution subplot",
 )
 parser.add_argument(
     "--distribution-precision",
@@ -34,7 +34,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-show_distribution: bool = args.show_distribution
+show_distribution: bool = not args.hide_distribution
 
 font_path = str(Path("fonts") / "fusion-pixel-12px-proportional-zh_hans.ttf")
 
