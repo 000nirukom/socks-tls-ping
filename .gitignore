@@ -13,3 +13,4 @@ wheels/
 
 /*.html
 /*.sh
+/logs

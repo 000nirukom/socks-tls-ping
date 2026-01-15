@@ -28,7 +28,7 @@ logger = logging.getLogger("SocksPing")
 logger.setLevel(logging.INFO)
 
 file_handler = logging.FileHandler(
-    f"{log_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
+    f"logs/{log_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
     encoding="utf-8",
 )
 file_handler.setLevel(logging.DEBUG)
