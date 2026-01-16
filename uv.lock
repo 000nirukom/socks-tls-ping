@@ -151,12 +151,16 @@ wheels = [
 [[package]]
 name = "fastplotlib"
 version = "0.6.1"
-source = { git = "https://github.com/MeowKatee/fastplotlib.git?rev=feat%2Fimgui-custom-font#087f1a4f5c1f5671446376042cef6f00e0c829f4" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cmap" },
     { name = "numpy" },
     { name = "pygfx" },
     { name = "wgpu" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/55/5d/8d8188e2702713b783774da30df40158b68650baae3c9a0eda50910ef5f5/fastplotlib-0.6.1.tar.gz", hash = "sha256:2de8b7cec83d5eeb7c39aacdf28994a46f87ce94354a684c8d3d89ebdbe796dd", size = 162943, upload-time = "2025-11-16T02:36:57.563Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/62/f1/c47cf226d712c39e5bf655d8b6b2e6fcb96a95e5defc5b576b115fbb4412/fastplotlib-0.6.1-py3-none-any.whl", hash = "sha256:bfc0c02a948d80b4e983bc77467d1b0edefd46be6e862e7b63b7c06d712b5955", size = 196172, upload-time = "2025-11-16T02:36:56.166Z" },
 ]
 
 [package.optional-dependencies]
@@ -848,7 +852,7 @@ pyecharts = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastplotlib", extras = ["imgui"], marker = "extra == 'fastplotlib'", git = "https://github.com/MeowKatee/fastplotlib.git?rev=feat%2Fimgui-custom-font" },
+    { name = "fastplotlib", extras = ["imgui"], marker = "extra == 'fastplotlib'", specifier = ">=0.6.1" },
     { name = "fontconfig-py", marker = "sys_platform != 'win32' and extra == 'fastplotlib'", specifier = ">=1.0.1" },
     { name = "httpx", extras = ["http2", "socks"], specifier = ">=0.28.1" },
     { name = "matplotlib", marker = "extra == 'matplotlib'", specifier = ">=3.10.8" },

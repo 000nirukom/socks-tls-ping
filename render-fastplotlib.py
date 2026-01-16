@@ -43,7 +43,7 @@ if not args.pixel_font:
         case "nt":
             font_path = f"{os.getenv('SystemDrive') or 'C:'}/Windows/Fonts/msyh.ttc"
         case "posix":
-            import fontconfig
+            import fontconfig  # type: ignore
 
             font_match = fontconfig.match(f":charset={f'{ord("中")}'}:weight=Regular")
             if font_match is not None:
@@ -118,9 +118,15 @@ figure: ImguiFigure = fpl.Figure(
     size=(700, 560),
     shape=(2, 1) if show_distribution else (1, 1),
     names=["RTT Distribution", log_name] if show_distribution else [log_name],
-    custom_fonts=[(font_path, 14)],
-    override_default_font=True,
 )
+
+imgui.set_current_context(figure._imgui_renderer.imgui_context)
+font_config = imgui.ImFontConfig()
+font_config.merge_mode = True
+
+imgui_io = imgui.get_io()
+
+imgui_io.fonts.add_font_from_file_ttf(font_path, 14.0, font_config)
 
 scatter_idx = 0 if not show_distribution else 1, 0
 
