@@ -195,9 +195,11 @@ async def do_request():
         consecutive_errors = 0
     else:
         consecutive_errors += 1
-        if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+        if (
+            consecutive_errors >= MAX_CONSECUTIVE_ERRORS
+            and consecutive_errors % MAX_CONSECUTIVE_ERRORS == 0
+        ):
             await recreate_client(f"连续 {consecutive_errors} 次失败触发重建")
-            consecutive_errors = 0  # 重置计数
 
     print_status()
     return success
