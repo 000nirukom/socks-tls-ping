@@ -70,5 +70,8 @@ uv run socks-tls-ping [SOCKS5_PORT] [LOG_PREFIX]
 > * Right-click and drag to scale along the x or y axis.
 > * Use the mouse wheel to zoom while preserving the current aspect ratio.
 
+> Optionally, to force it render on specified device depends on description name,
+> Specify `WGPUPY_WGPU_ADAPTER_NAME="NVIDIA"` in environment.
+
 <img width="1918" height="968" alt="image" src="https://github.com/user-attachments/assets/a5657d77-219f-422a-938f-9708c0e6d128" />
 
