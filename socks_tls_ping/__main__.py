@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import argparse
 from collections import deque
 import asyncio
 import time
@@ -11,20 +12,48 @@ import httpx
 from httpx import AsyncClient, Limits, AsyncHTTPTransport
 import numpy as np
 
-# ================== 配置 ==================
-port = sys.argv[1] if len(sys.argv) > 1 else exit(1)
-log_name = sys.argv[2] if len(sys.argv) > 2 else exit(1)
 
-PROXY = "socks5://127.0.0.1:" + port
+parser = argparse.ArgumentParser()
+
+parser.add_argument("port", help="本地 socks5 端口")
+parser.add_argument("log_name", help="日志文件名前缀")
+
+parser.add_argument("--interval", type=float, default=1, help="请求间隔（秒）")
+parser.add_argument("--run-minutes", type=int, default=180, help="运行时长（分钟）")
+parser.add_argument("--timeout", type=float, default=10, help="请求总超时（秒）")
+parser.add_argument("--connect-timeout", type=float, default=5, help="连接超时（秒）")
+parser.add_argument("--read-timeout", type=float, default=8, help="读取超时（秒）")
+
+parser.add_argument(
+    "--recreate-interval", type=int, default=300, help="强制重建连接池间隔（秒）"
+)
+parser.add_argument("--max-errors", type=int, default=4, help="连续失败多少次触发重建")
+
+args = parser.parse_args()
+
+
+# ================== 配置 ==================
+port = args.port
+log_name = args.log_name
+
+PROXY = f"socks5://127.0.0.1:{port}"
 TARGET = "https://www.cloudflare.com/cdn-cgi/trace"
-INTERVAL = 1  # 请求间隔（秒）
-RUN_MINUTES = 180  # 总运行分钟数
-TIMEOUT = httpx.Timeout(10.0, connect=5.0, read=8.0)
-RECREATE_INTERVAL = 5 * 60  # 强制重建连接池间隔（秒）
-MAX_CONSECUTIVE_ERRORS = 4  # 连续失败多少次才重建
+
+INTERVAL = args.interval
+RUN_MINUTES = args.run_minutes
+
+TIMEOUT = httpx.Timeout(
+    args.timeout,
+    connect=args.connect_timeout,
+    read=args.read_timeout,
+)
+
+RECREATE_INTERVAL = args.recreate_interval
+MAX_CONSECUTIVE_ERRORS = args.max_errors
 
 # ================== 日志设置 ==================
-logger = logging.getLogger("SocksPing")
+logger = logging.getLogger("SocksHTTPping")
+
 logger.setLevel(logging.INFO)
 
 file_handler = logging.FileHandler(
@@ -226,7 +255,7 @@ async def run_loop(start_time):
 async def main():
     global client
     logger.info("=" * 70)
-    logger.info("Socks5 连接质量详细压测程序 v2（修复 Ctrl+C + 时间限制版）")
+    logger.info("Socks5 连接质量详细压测程序")
     logger.info(f"代理: {PROXY}")
     logger.info(f"目标: {TARGET}")
     logger.info(f"运行时长: {RUN_MINUTES} 分钟")
