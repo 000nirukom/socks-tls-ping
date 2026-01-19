@@ -34,30 +34,37 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+LOG_FILE = Path(args.logfile)
+log_name = "_".join(LOG_FILE.stem.split("_")[:-2])
+
 show_distribution: bool = not args.hide_distribution
 
-font_path = str(Path("fonts") / "fusion-pixel-12px-proportional-zh_hans.ttf")
+font_paths = [str(Path("fonts") / "fusion-pixel-12px-proportional-zh_hans.ttf")]
 
 if not args.pixel_font:
     match os.name:
         case "nt":
-            font_path = f"{os.getenv('SystemDrive') or 'C:'}/Windows/Fonts/msyh.ttc"
+            font_paths = [f"{os.getenv('SystemDrive') or 'C:'}/Windows/Fonts/msyh.ttc"]
         case "posix":
             import fontconfig  # type: ignore
 
-            font_match = fontconfig.match(f":charset={f'{ord("中")}'}:weight=Regular")
+            # make sure font contains needed characters
+            font_match = fontconfig.match(
+                pattern="".join(f":charset={ord(ch):X}" for ch in log_name)
+                + ":weight=Regular",
+                select=("family", "file"),
+            )
+            fontconfig.list()
+            print(f"font match: {font_match}")
             if font_match is not None:
-                font_path = font_match["file"]
+                font_paths = [font_match["file"]]
 
-gfx_font = gfx_font_manager.add_font_file(font_file=font_path)
+gfx_font = gfx_font_manager.add_font_file(font_file=font_paths[0])
 gfx_font_manager._default_font_props = FontProps(
     gfx_font.family,
     style="normal",
     weight="regular",
 )
-
-LOG_FILE = Path(args.logfile)
-log_name = "_".join(LOG_FILE.stem.split("_")[:-2])
 
 rtt_list: list[tuple[datetime, float]] = []
 pattern = re.compile(r"请求 #(\d+) 成功 \| RTT: ([\d.]+)ms")
@@ -126,7 +133,8 @@ font_config.merge_mode = True
 
 imgui_io = imgui.get_io()
 
-imgui_io.fonts.add_font_from_file_ttf(font_path, 14.0, font_config)
+for font_path in font_paths:
+    imgui_io.fonts.add_font_from_file_ttf(font_path, 14.0, font_config)
 
 scatter_idx = 0 if not show_distribution else 1, 0
 
