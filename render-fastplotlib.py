@@ -4,11 +4,13 @@ import re
 import argparse
 from datetime import datetime
 from pathlib import Path
+from importlib import resources
 import statistics
 
 import numpy as np
 import fastplotlib as fpl
 import pygfx
+import imgui_bundle
 from pygfx.utils.text import font_manager as gfx_font_manager, FontProps
 from fastplotlib.layouts import ImguiFigure
 from fastplotlib.ui import EdgeWindow
@@ -17,9 +19,19 @@ from imgui_bundle import imgui
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="Path to the log file")
 parser.add_argument(
-    "--pixel-font",
+    "--pixel-font-canvas",
     action="store_true",
-    help="Force use fusion pixel font for canvas and imgui",
+    help="Force to fusion pixel font for canvas",
+)
+parser.add_argument(
+    "--pixel-font-imgui",
+    action="store_true",
+    help="Force to fusion pixel font for imgui",
+)
+parser.add_argument(
+    "--ignore-fpl-font",
+    action="store_true",
+    help="Override fastplotlib default fonts, otherwise only font for missing characters fallback",
 )
 parser.add_argument(
     "--hide-distribution",
@@ -38,33 +50,57 @@ LOG_FILE = Path(args.logfile)
 log_name = "_".join(LOG_FILE.stem.split("_")[:-2])
 
 show_distribution: bool = not args.hide_distribution
+IGNORE_FPL_DEFAULT: bool = args.ignore_fpl_font
+FORCE_PIXEL_GFX = args.pixel_font_canvas
+FORCE_PIXEL_IMGUI = args.pixel_font_imgui
 
-font_paths = [str(Path("fonts") / "fusion-pixel-12px-proportional-zh_hans.ttf")]
+PIXEL_FONT_PATH = str(Path("fonts") / "fusion-pixel-12px-proportional-zh_hans.ttf")
+system_fonts = []
 
-if not args.pixel_font:
-    match os.name:
-        case "nt":
-            font_paths = [f"{os.getenv('SystemDrive') or 'C:'}/Windows/Fonts/msyh.ttc"]
-        case "posix":
-            import fontconfig  # type: ignore
+match os.name:
+    case "nt":
+        system_fonts = [f"{os.getenv('SystemDrive') or 'C:'}/Windows/Fonts/msyh.ttc"]
+    case "posix":
+        import fontconfig  # type: ignore
 
-            # make sure font contains needed characters
-            font_match = fontconfig.match(
-                pattern="".join(f":charset={ord(ch):X}" for ch in log_name)
-                + ":weight=Regular",
-                select=("family", "file"),
-            )
-            fontconfig.list()
-            print(f"font match: {font_match}")
-            if font_match is not None:
-                font_paths = [font_match["file"]]
+        # make sure font contains needed characters
+        font_match = fontconfig.match(
+            pattern="".join(f":charset={ord(ch):X}" for ch in log_name)
+            + ":weight=Regular",
+            select=("family", "file"),
+        )
+        fontconfig.list()
+        if font_match is not None:
+            system_fonts = [font_match["file"]]
 
-gfx_font = gfx_font_manager.add_font_file(font_file=font_paths[0])
-gfx_font_manager._default_font_props = FontProps(
-    gfx_font.family,
-    style="normal",
-    weight="regular",
-)
+if FORCE_PIXEL_IMGUI:
+    imgui_font_paths: list[str] = [PIXEL_FONT_PATH]
+elif system_fonts:
+    imgui_font_paths = system_fonts
+else:
+    print("Warning: using default font for Dear ImGui")
+    imgui_font_paths = []
+
+if FORCE_PIXEL_GFX:
+    gfx_font_path: str = PIXEL_FONT_PATH
+elif system_fonts:
+    gfx_font_path = system_fonts[0]
+else:
+    print("Warning: using default font for PyGFX")
+    gfx_font_path = None
+
+
+print(f"""Fonts for canvas: 
+{gfx_font_path}
+""")
+
+if gfx_font_path is not None:
+    gfx_font = gfx_font_manager.add_font_file(font_file=gfx_font_path)
+    gfx_font_manager._default_font_props = FontProps(
+        gfx_font.family,
+        style="normal",
+        weight="regular",
+    )
 
 rtt_list: list[tuple[datetime, float]] = []
 pattern = re.compile(r"请求 #(\d+) 成功 \| RTT: ([\d.]+)ms")
@@ -127,14 +163,45 @@ figure: ImguiFigure = fpl.Figure(
     names=["RTT Distribution", log_name] if show_distribution else [log_name],
 )
 
-imgui.set_current_context(figure._imgui_renderer.imgui_context)
-font_config = imgui.ImFontConfig()
-font_config.merge_mode = True
+if imgui_font_paths:
+    imgui.set_current_context(figure._imgui_renderer.imgui_context)
 
-imgui_io = imgui.get_io()
+    imgui_io = imgui.get_io()
 
-for font_path in font_paths:
-    imgui_io.fonts.add_font_from_file_ttf(font_path, 14.0, font_config)
+    if IGNORE_FPL_DEFAULT:
+        imgui_io.fonts.clear()
+
+    # Workaround for PUA icon font
+    with resources.as_file(
+        resources.files(imgui_bundle)
+        / "assets"
+        / "fonts"
+        / "Font_Awesome_6_Free-Solid-900.otf"
+    ) as icon_font_path:
+        if IGNORE_FPL_DEFAULT:
+            imgui_font_paths.append(str(icon_font_path))
+
+        print("Fonts for imgui:")
+
+        for i, font_path in enumerate(imgui_font_paths):
+            font_config = imgui.ImFontConfig()
+
+            if IGNORE_FPL_DEFAULT:
+                font_config.merge_mode = i > 0
+            else:
+                font_config.merge_mode = True
+
+            imgui_font = imgui_io.fonts.add_font_from_file_ttf(
+                font_path,
+                14.0,
+                font_config,
+            )
+            print(font_path)
+
+    imgui.push_font(
+        imgui_font,
+        imgui_font.legacy_size,
+    )
 
 scatter_idx = 0 if not show_distribution else 1, 0
 
